@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Icoon from '../onderdelen/Icoon'
 import { dollars, kort, leesGetal, metTeken } from '../hulp/getal'
 import { leesScreenshot, schrijfDag, schrijfScreenshot, verwijderScreenshot, type Dag } from '../opslag/dagen'
+import { nabesprekingsVragen } from '../regels/terugblik'
 import {
   FOUTLABELS,
   foutenInResultaat,
@@ -32,6 +33,7 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
     verstTegen: bewaard ? kort(bewaard.verstTegen) : '',
   })
   const [fouten, setFouten] = useState<string[]>([])
+  const [antwoorden, setAntwoorden] = useState<[string, string]>(['', ''])
   const [foto, setFoto] = useState<Blob | null>(null)
   const [fotoUrl, setFotoUrl] = useState<string | null>(null)
 
@@ -148,6 +150,15 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
   }
 
   const geld = invoer.r !== null ? inGeld(invoer.r, besluit) : null
+  const vragen = nabesprekingsVragen({
+    r: invoer.r,
+    volgensPlan:
+      !besluit.ongepland &&
+      invoer.entryVolgensPlan !== false &&
+      invoer.stopVolgensPlan !== false &&
+      invoer.exitsVolgensPlan !== false,
+    heeftFoutlabel: invoer.foutlabels.length > 0,
+  })
 
   const getalVeld = (veld: GetalVeld, label: string, hulp: string) => (
     <label className="veldgroep">
@@ -245,15 +256,39 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
         </div>
       </div>
 
-      <label className="veldgroep">
-        <span className="label">Nabespreking</span>
-        <textarea
-          rows={4}
-          placeholder="Wat ging goed, wat niet, en wat neem je mee?"
-          value={invoer.nabespreking}
-          onChange={(e) => setInvoer({ ...invoer, nabespreking: e.target.value })}
-        />
-      </label>
+      {bewaard ? (
+        <label className="veldgroep">
+          <span className="label">Nabespreking</span>
+          <textarea
+            rows={5}
+            value={invoer.nabespreking}
+            onChange={(e) => setInvoer({ ...invoer, nabespreking: e.target.value })}
+          />
+        </label>
+      ) : (
+        <div className="veldgroep">
+          <span className="label">Nabespreking: twee korte vragen</span>
+          {vragen.map((vraag, n) => (
+            <label key={vraag} className="veldgroep">
+              <span>{vraag}</span>
+              <textarea
+                rows={2}
+                value={antwoorden[n]}
+                onChange={(e) => {
+                  const nieuw: [string, string] = n === 0 ? [e.target.value, antwoorden[1]] : [antwoorden[0], e.target.value]
+                  setAntwoorden(nieuw)
+                  // Beide antwoorden zijn nodig; pas dan is de nabespreking compleet.
+                  const compleet = nieuw[0].trim() && nieuw[1].trim()
+                  setInvoer({
+                    ...invoer,
+                    nabespreking: compleet ? `${vragen[0]}\n${nieuw[0].trim()}\n\n${vragen[1]}\n${nieuw[1].trim()}` : '',
+                  })
+                }}
+              />
+            </label>
+          ))}
+        </div>
+      )}
 
       {fouten.length > 0 && (
         <div className="melding fout" role="alert">

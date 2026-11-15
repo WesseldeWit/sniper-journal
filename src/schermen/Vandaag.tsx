@@ -11,6 +11,9 @@ import { dollars, kort } from '../hulp/getal'
 import { FTMO, ftmoStand } from '../regels/ftmo'
 import { inPauze, isHandelsdag, nlDatum, nlMinuten, sessieVensters, volgendeHandelsdag } from '../regels/sessie'
 import { berekenStreak } from '../regels/streak'
+import { leesGeheugen } from '../opslag/geheugen'
+import { dagbriefing, signalen } from '../regels/agent'
+import Briefing from './Briefing'
 import DagKaart from './DagKaart'
 import { useDag } from './useDag'
 
@@ -21,6 +24,11 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
   const { dag, setDag, screenshot, setScreenshot } = useDag(datum)
   const [alle, setAlle] = useState<Dag[]>([])
   const [nu, setNu] = useState(() => new Date())
+  const [lessen, setLessen] = useState<string[]>([])
+
+  useEffect(() => {
+    void leesGeheugen().then((g) => setLessen(g.lessen.map((l) => l.tekst)))
+  }, [])
 
   // De sessie-indicator loopt mee met de klok.
   useEffect(() => {
@@ -42,6 +50,8 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
   const metVandaag = [...alle.filter((d) => d.datum !== datum), dag]
   const streak = berekenStreak(metVandaag, datum)
   const genomen = dag.besluit?.soort === 'genomen'
+  // Nieuws komt in deel 8; tot die tijd meldt de agent eerlijk dat het onbekend is.
+  const agent = { vandaag: datum, nu, dagen: metVandaag, instellingen, lessen, nieuws: [], nieuwsBekend: false }
   const stand = ftmoStand(
     metVandaag.flatMap((d) =>
       d.resultaat && d.besluit ? [{ datum: d.datum, bedrag: d.resultaat.r * (d.besluit.bedrag ?? 0) }] : [],
@@ -75,6 +85,8 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
       {handelsdag && (
         <Tijdlijn {...sessieVensters(datum)} zones={[]} nu={nlDatum(nu) === datum ? nlMinuten(nu) : null} />
       )}
+
+      {handelsdag && <Briefing datum={datum} regels={dagbriefing(agent)} signalen={signalen(agent)} />}
 
       {handelsdag ? (
         <DagKaart dag={dag} setDag={setDag} screenshot={screenshot} setScreenshot={setScreenshot} />

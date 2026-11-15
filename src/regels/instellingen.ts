@@ -23,6 +23,8 @@ export interface Instellingen {
   risicoTabel: Record<RisicoTrede, number>
   /** Periodes waarin de dagen dicht staan, bijvoorbeeld de laatste weken van december. */
   pauzes: { van: string; tot: string }[]
+  /** Soorten meldingen van de agent die zijn uitgezet. */
+  meldingenUit: string[]
 }
 
 export const STANDAARD_INSTELLINGEN: Instellingen = {
@@ -32,6 +34,7 @@ export const STANDAARD_INSTELLINGEN: Instellingen = {
   lotStap: 0.01,
   risicoTabel: { laag: 0.5, midden: 0.75, hoog: 1 },
   pauzes: [],
+  meldingenUit: [],
 }
 
 /** Het risico per trade is nooit hoger dan dit, wat de tabel ook zegt. */

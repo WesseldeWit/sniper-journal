@@ -35,6 +35,7 @@ export default function InstellingenScherm({ naarAiTest }: { naarAiTest: () => v
     const nieuw: Instellingen = {
       accountGrootte,
       pauzes: instellingen.pauzes,
+      meldingenUit: instellingen.meldingenUit,
       ouncePerLot: leesGetal(nieuweTekst.ouncePerLot),
       pipGrootte: leesGetal(nieuweTekst.pipGrootte),
       lotStap: leesGetal(nieuweTekst.lotStap),

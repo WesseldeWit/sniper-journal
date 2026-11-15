@@ -1621,3 +1621,81 @@ fieldset:disabled .confluences label {
     transform: scale(1.15);
   }
 }
+
+/* Briefing en geheugen van de agent */
+
+.briefing {
+  gap: 12px;
+}
+
+.briefing-lijst {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.briefing-lijst div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  font-size: 0.92rem;
+}
+
+.briefing-lijst dt {
+  color: var(--zacht);
+}
+
+.signalen {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.signalen li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--goud);
+  border-radius: var(--r-klein);
+  background: var(--goud-zacht);
+  font-size: 0.92rem;
+}
+
+.signalen .icoon {
+  color: var(--goud);
+  margin-top: 2px;
+}
+
+.geheugen-rij {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rand);
+}
+
+.geheugen-rij textarea {
+  flex: 1;
+}
+
+.geheugen-rij .knop,
+.geheugen-rij .rij-knoppen {
+  flex: none;
+}
+
+@media (max-width: 760px) {
+  .briefing-lijst div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .geheugen-rij {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -65,7 +65,7 @@ export function foutenInResultaat(x: ResultaatInvoer): string[] {
   if (x.entryVolgensPlan === null || x.stopVolgensPlan === null || x.exitsVolgensPlan === null) {
     fouten.push('Beantwoord de drie vragen over regeltrouw.')
   }
-  if (!x.nabespreking.trim()) fouten.push('Schrijf een korte nabespreking.')
+  if (!x.nabespreking.trim()) fouten.push('Beantwoord beide vragen van de nabespreking.')
   return fouten
 }
 
