@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { dollars, getal, kort, leesGetal } from '../hulp/getal'
 import { useInstellingen } from '../opslag/InstellingenContext'
+import { magRegelsWijzigen } from '../regels/slot'
 import {
   MAX_RISICO_PROCENT,
   STOP_MAX_PIPS,
@@ -10,6 +11,7 @@ import {
 } from '../regels/instellingen'
 import AiBlok from './AiBlok'
 import BackupBlok from './BackupBlok'
+import LogboekBlok from './LogboekBlok'
 import PauzeBlok from './PauzeBlok'
 import { lotsize, maxRisicoProcent, pipWaardePerLot, risicoBedrag } from '../regels/risico'
 
@@ -122,6 +124,9 @@ export default function InstellingenScherm({ naarAiTest }: { naarAiTest: () => v
       <div className="blok">
         <h2>Risicotabel</h2>
         <p className="zacht">
+          {magRegelsWijzigen(new Date())
+            ? 'Open: beide sessies zijn dicht, je kunt je regels nu wijzigen. '
+            : 'Op slot: tijdens de Londen- en New York-sessie kun je je regels niet wijzigen. '}
           Maximaal risico per trade, afhankelijk van het aantal extra confluences in de entryzone. Nooit hoger
           dan {kort(MAX_RISICO_PROCENT)}%. Zonder extra confluence is er geen trade.
         </p>
@@ -177,6 +182,8 @@ export default function InstellingenScherm({ naarAiTest }: { naarAiTest: () => v
       <AiBlok naarTest={naarAiTest} />
 
       <PauzeBlok />
+
+      <LogboekBlok />
 
       <BackupBlok />
     </section>

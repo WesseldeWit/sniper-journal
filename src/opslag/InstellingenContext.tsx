@@ -5,7 +5,10 @@ import {
   werkInstellingenBij,
   type Instellingen,
 } from '../regels/instellingen'
+import { magRegelsWijzigen, regelWijzigingen, SLOT_MELDING, type LogRegel } from '../regels/slot'
 import { lees, schrijf } from './opslag'
+
+export const LOGBOEK = 'logboek'
 
 const SLEUTEL = 'instellingen'
 
@@ -30,6 +33,14 @@ export function InstellingenProvider({ children }: { children: ReactNode }) {
 
   const bewaar = (nieuw: Instellingen) => {
     const fouten = controleerInstellingen(nieuw)
+    // Regels op slot: wat je regels raakt kan alleen in het weekend of buiten de sessies worden gewijzigd.
+    const wijzigingen = regelWijzigingen(instellingen, nieuw)
+    if (fouten.length === 0 && wijzigingen.length > 0) {
+      const nu = new Date()
+      if (!magRegelsWijzigen(nu)) return [SLOT_MELDING]
+      const regels: LogRegel[] = wijzigingen.map((w) => ({ ...w, op: nu.toISOString() }))
+      void lees<LogRegel[]>(LOGBOEK).then((log) => schrijf(LOGBOEK, [...regels, ...(log ?? [])]))
+    }
     if (fouten.length === 0) {
       setInstellingen(nieuw)
       void schrijf(SLEUTEL, nieuw)
