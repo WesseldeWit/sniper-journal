@@ -5,13 +5,15 @@ import AiTest from './schermen/AiTest'
 import Geschiedenis from './schermen/Geschiedenis'
 import InstellingenScherm from './schermen/InstellingenScherm'
 import AgentScherm from './schermen/AgentScherm'
+import PlaybookScherm from './schermen/PlaybookScherm'
 import Vandaag from './schermen/Vandaag'
 
-type Scherm = 'vandaag' | 'geschiedenis' | 'agent' | 'instellingen' | 'aitest'
+type Scherm = 'vandaag' | 'geschiedenis' | 'playbook' | 'agent' | 'instellingen' | 'aitest'
 
 const TABS: { id: Scherm; naam: string; icoon: IcoonNaam }[] = [
   { id: 'vandaag', naam: 'Vandaag', icoon: 'vandaag' },
   { id: 'geschiedenis', naam: 'Geschiedenis', icoon: 'lijst' },
+  { id: 'playbook', naam: 'Playbook', icoon: 'boek' },
   { id: 'agent', naam: 'Agent', icoon: 'notitie' },
   { id: 'instellingen', naam: 'Instellingen', icoon: 'tandwiel' },
 ]
@@ -56,6 +58,7 @@ export default function App() {
         <main className="inhoud" key={`${scherm}-${teller}`}>
           {scherm === 'vandaag' && <Vandaag naarGeschiedenis={() => ga('geschiedenis')} />}
           {scherm === 'geschiedenis' && <Geschiedenis naarVandaag={() => ga('vandaag')} />}
+          {scherm === 'playbook' && <PlaybookScherm naarGeschiedenis={() => ga('geschiedenis')} />}
           {scherm === 'agent' && <AgentScherm />}
           {scherm === 'instellingen' && <InstellingenScherm naarAiTest={() => ga('aitest')} />}
           {scherm === 'aitest' && <AiTest naarInstellingen={() => ga('instellingen')} />}

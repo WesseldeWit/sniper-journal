@@ -6,6 +6,8 @@ import StatusChip from '../onderdelen/StatusChip'
 import { leesAlleDagen, type Dag } from '../opslag/dagen'
 import { useInstellingen } from '../opslag/InstellingenContext'
 import { statusVanDag } from '../regels/dagstatus'
+import { leesPlaybook, schrijfPlaybook, type PlaybookKaart } from '../opslag/playbook'
+import { aanwezigeConfluences, EXTRA, VERPLICHT } from '../regels/check'
 import DagKaart from './DagKaart'
 import { useDag } from './useDag'
 
@@ -91,6 +93,58 @@ function EerdereDag({ datum, terug }: { datum: DagSleutel; terug: () => void }) 
         </div>
       </header>
       <DagKaart dag={dag} setDag={setDag} screenshot={screenshot} setScreenshot={setScreenshot} />
+      <PlaybookKnop dag={dag} />
     </section>
+  )
+}
+
+/** Eén knop om een afgeronde trade in het playbook te zetten. */
+function PlaybookKnop({ dag }: { dag: Dag }) {
+  const [kaarten, setKaarten] = useState<PlaybookKaart[] | null>(null)
+  const [uitleg, setUitleg] = useState('')
+  useEffect(() => {
+    void leesPlaybook().then(setKaarten)
+  }, [])
+  if (!kaarten || dag.besluit?.soort !== 'genomen' || !dag.resultaat) return null
+
+  const staatErin = kaarten.some((k) => k.datum === dag.datum)
+  const namen = Object.fromEntries([...VERPLICHT, ...EXTRA].map((c) => [c.id, c.naam]))
+
+  function voegToe() {
+    const kaart: PlaybookKaart = {
+      datum: dag.datum,
+      model: dag.analyse.model,
+      richting: dag.analyse.richting,
+      r: dag.resultaat!.r,
+      confluences: aanwezigeConfluences({
+        planVast: true,
+        heeftModel: dag.analyse.model !== null,
+        confluences: dag.confluences,
+      }).map((id) => namen[id]),
+      uitleg: uitleg.trim(),
+      toegevoegdOp: new Date().toISOString(),
+    }
+    const nieuw = [...kaarten!, kaart]
+    setKaarten(nieuw)
+    void schrijfPlaybook(nieuw)
+  }
+
+  return (
+    <div className="blok">
+      <span className="bovenkop">Playbook</span>
+      {staatErin ? (
+        <StatusChip soort="goedgekeurd" tekst="Staat in je playbook" />
+      ) : (
+        <>
+          <label className="veldgroep">
+            <span className="label">Waarom werkte deze setup? (optioneel, later aan te vullen)</span>
+            <textarea rows={2} value={uitleg} onChange={(e) => setUitleg(e.target.value)} />
+          </label>
+          <button className="knop zelf" onClick={voegToe}>
+            Zet in mijn playbook
+          </button>
+        </>
+      )}
+    </div>
   )
 }

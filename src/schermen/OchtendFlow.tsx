@@ -12,7 +12,7 @@ import StatusChip from '../onderdelen/StatusChip'
 import { leesAlleDagen, schrijfDag, schrijfScreenshot, type Dag } from '../opslag/dagen'
 import { leesGeheugen, schrijfGeheugen } from '../opslag/geheugen'
 import { useInstellingen } from '../opslag/InstellingenContext'
-import { leesPlaybook } from '../opslag/playbook'
+import { leesPlaybook, type PlaybookKaart } from '../opslag/playbook'
 import { patronen, tradeRegels } from '../regels/agent'
 import { MODEL_NAMEN } from '../regels/analyse'
 import { EXTRA, VERPLICHT } from '../regels/check'
@@ -56,6 +56,7 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
   const [luistert, setLuistert] = useState(false)
   const [geheugen, setGeheugen] = useState<AgentGeheugen>(LEEG_AGENT_GEHEUGEN)
   const [zelfPatronen, setZelfPatronen] = useState<string[]>([])
+  const [playbook, setPlaybook] = useState<PlaybookKaart[]>([])
   const [kosten, setKosten] = useState(0)
   const rondes = useRef(0)
   const sleutel = leesSleutel()
@@ -78,6 +79,7 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
         stand: `${metTeken(stand.winstProcent)}% richting 10%, buffer ${dollars(Math.round(stand.buffer))}.`,
       })
       setZelfPatronen(patronen(dagen))
+      setPlaybook(playbook)
     })
   }, [instellingen.accountGrootte])
 
@@ -236,6 +238,9 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
   const kandidaat = dagMetLezing(dag, lezing, sessie, idee, instellingen)
   const { analyse, check } = oordeelVanDag({ ...kandidaat, vastgelegdOp: 'kandidaat' }, instellingen)
   const bezig = fase === 'bezig'
+  const vergelijkbaar = playbook.filter(
+    (k) => k.model !== null && k.model === lezing.entryModel.waarde && k.richting === lezing.richting.waarde,
+  )
   const vandaagTekst = compacteDatum(dag.datum)
 
   function corrigeerPrijs(veld: PrijsVeld) {
@@ -418,6 +423,15 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
           <>
             <span className="bovenkop">Lijkt op</span>
             <p>{lezing.vergelijking}</p>
+          </>
+        )}
+        {vergelijkbaar.length > 0 && (
+          <>
+            <span className="bovenkop">In je playbook</span>
+            <p>
+              Zelfde model en richting:{' '}
+              {vergelijkbaar.map((k) => `${compacteDatum(k.datum)}${k.r === null ? '' : ` (${metTeken(k.r)}R)`}`).join(', ')}.
+            </p>
           </>
         )}
         {zelfPatronen.length > 0 && (
