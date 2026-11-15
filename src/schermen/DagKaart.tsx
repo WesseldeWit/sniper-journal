@@ -10,6 +10,7 @@ import { regeltrouw } from '../regels/resultaat'
 import AnalyseStap from './AnalyseStap'
 import BesluitStap from './BesluitStap'
 import CheckStap from './CheckStap'
+import ManagementKaart from './ManagementKaart'
 import ResultaatStap from './ResultaatStap'
 
 interface Props {
@@ -92,7 +93,12 @@ export default function DagKaart({ dag, setDag, screenshot, setScreenshot }: Pro
     analyse: <AnalyseStap dag={dag} setDag={setDag} screenshot={screenshot} setScreenshot={setScreenshot} />,
     check: <CheckStap dag={dag} setDag={setDag} />,
     besluit: <BesluitStap dag={dag} setDag={setDag} />,
-    resultaat: <ResultaatStap dag={dag} setDag={setDag} />,
+    resultaat: (
+      <div className="stapel">
+        <ManagementKaart dag={dag} setDag={setDag} />
+        <ResultaatStap dag={dag} setDag={setDag} />
+      </div>
+    ),
   }
 
   return (

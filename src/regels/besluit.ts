@@ -26,12 +26,13 @@ export interface Besluit {
 export interface DagMetBesluit extends DagInvoer {
   datum: DagSleutel
   checkKlaarOp?: string | null
+  afgeslotenOp?: string | null
   besluit: Besluit | null
 }
 
 /** One & Done: na een genomen trade zit de dag op slot. Dat is niet terug te draaien. */
-export function isOpSlot(dag: { besluit: Besluit | null }): boolean {
-  return dag.besluit?.soort === 'genomen'
+export function isOpSlot(dag: { besluit: Besluit | null; afgeslotenOp?: string | null }): boolean {
+  return dag.besluit?.soort === 'genomen' || Boolean(dag.afgeslotenOp)
 }
 
 /**
@@ -45,7 +46,8 @@ export function isOngepland(dag: { datum: DagSleutel; vastgelegdOp: string | nul
 
 function algemeneFouten(dag: DagMetBesluit, vandaag: DagSleutel): string[] {
   const fouten: string[] = []
-  if (isOpSlot(dag)) fouten.push('Er is vandaag al een trade genomen. De dag zit op slot.')
+  if (dag.besluit?.soort === 'genomen') fouten.push('Er is vandaag al een trade genomen. De dag zit op slot.')
+  else if (dag.afgeslotenOp) fouten.push('Deze dag is afgesloten. Er is geen nieuwe analyse of trade meer mogelijk.')
   if (dag.datum > vandaag) fouten.push('Deze dag ligt in de toekomst. Een besluit kan pas op de dag zelf.')
   if (dag.vastgelegdOp === null) fouten.push('Het plan is nog niet vastgelegd.')
   return fouten
@@ -116,7 +118,12 @@ export function slaOver(
   }
 }
 
-/** De onderdelen van een dag die na een genomen trade nooit meer mogen veranderen. */
+/** Sluit een dag zonder trade af. Kan niet als er al een trade is genomen of als de dag al dicht is. */
+export function magAfsluiten(dag: DagMetBesluit, vandaag: DagSleutel): boolean {
+  return !isOpSlot(dag) && dag.datum <= vandaag
+}
+
+/** De onderdelen van een dag die na een genomen trade of na het afsluiten nooit meer mogen veranderen. */
 const VAST_NA_TRADE = [
   'analyse',
   'vastgelegdOp',
@@ -125,6 +132,7 @@ const VAST_NA_TRADE = [
   'risicoProcent',
   'checkKlaarOp',
   'besluit',
+  'afgeslotenOp',
 ] as const
 
 /**

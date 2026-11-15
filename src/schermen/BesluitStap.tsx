@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import Icoon from '../onderdelen/Icoon'
+import StatusChip from '../onderdelen/StatusChip'
+import { getal as toonGetal } from '../hulp/getal'
+import { oordeelVanDag } from '../regels/dagoordeel'
+import OrderKaart, { type OrderRegel } from './OrderKaart'
 import { vandaag } from '../hulp/datum'
 import { dollars, getal, kort } from '../hulp/getal'
 import { schrijfDag, type Dag } from '../opslag/dagen'
@@ -34,7 +38,12 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
       setFouten(uitkomst.fouten)
     } else {
       setFouten([])
-      bewaar({ ...dag, besluit: uitkomst.besluit })
+      // Een genomen trade sluit de dag meteen af (One & Done).
+      bewaar({
+        ...dag,
+        besluit: uitkomst.besluit,
+        afgeslotenOp: uitkomst.besluit.soort === 'genomen' ? uitkomst.besluit.op : dag.afgeslotenOp,
+      })
     }
   }
 
@@ -59,6 +68,7 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
           <dt>Extra confluences</dt>
           <dd>{b.aantalConfluences} van 6</dd>
         </dl>
+        <p className="zacht">De managementkaart staat bij stap 4.</p>
         <p>
           One &amp; Done. Vandaag komt er geen tweede trade, bij winst en bij verlies. Volg het
           trademanagement-schema en sluit het platform.
@@ -73,9 +83,26 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
         <strong>Niet genomen</strong>
         <p className="zacht">{moment(b.op)}</p>
         <p>{b.reden}</p>
-        <button className="knop zelf" onClick={() => bewaar({ ...dag, besluit: null })}>
-          Besluit terugdraaien
-        </button>
+        {dag.afgeslotenOp ? (
+          <StatusChip soort="slot" tekst="Dag afgesloten" />
+        ) : (
+          <div className="rij-knoppen">
+            <button className="knop primair" onClick={() => bewaar({ ...dag, afgeslotenOp: new Date().toISOString() })}>
+              Dag afsluiten
+            </button>
+            <button className="knop" onClick={() => bewaar({ ...dag, besluit: null })}>
+              Besluit terugdraaien
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (dag.afgeslotenOp) {
+    return (
+      <div className="blok">
+        <StatusChip soort="slot" tekst="Dag afgesloten zonder trade" />
       </div>
     )
   }
@@ -85,6 +112,22 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
   const blokkades = foutenBijGenomen(dag, instellingen, nu)
   const magNemen = blokkades.length === 0
   const automatischOngepland = isOngepland(dag, false)
+  const { analyse, check } = oordeelVanDag(dag, instellingen)
+  const punt = (n: number, decimalen = 2) => n.toFixed(decimalen)
+  const order: OrderRegel[] | null =
+    check.goedgekeurd && analyse.entry !== null && analyse.doelen && dag.analyse.stop !== null
+      ? [
+          {
+            naam: 'Richting',
+            tekst: dag.analyse.richting === 'short' ? 'Short · verkopen' : 'Long · kopen',
+            kopie: dag.analyse.richting === 'short' ? 'Sell' : 'Buy',
+          },
+          { naam: 'Lotsize', tekst: toonGetal(check.lots!), kopie: punt(check.lots!) },
+          { naam: 'Entry', tekst: toonGetal(analyse.entry), kopie: punt(analyse.entry) },
+          { naam: 'Stop loss', tekst: toonGetal(dag.analyse.stop), kopie: punt(dag.analyse.stop) },
+          { naam: 'Doel (1:3)', tekst: toonGetal(analyse.doelen.r3), kopie: punt(analyse.doelen.r3) },
+        ]
+      : null
 
   return (
     <div className="blok">
@@ -96,6 +139,7 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
             <strong>Genomen</strong>
             {magNemen ? (
               <>
+                {order && <OrderKaart regels={order} />}
                 {automatischOngepland ? (
                   <p className="veld-fout">
                     Het plan is pas na deze dag vastgelegd. De trade krijgt het label ongepland.
@@ -135,6 +179,11 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
                   <li key={f}>{f}</li>
                 ))}
               </ul>
+            )}
+            {!magNemen && (
+              <button className="knop" onClick={() => bewaar({ ...dag, afgeslotenOp: new Date().toISOString() })}>
+                Geen trade: dag afsluiten
+              </button>
             )}
           </div>
 

@@ -6,6 +6,8 @@ const PADEN = {
   klok: 'M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z',
   slot: 'M7 11V8a5 5 0 0110 0v3M6 11h12v9H6z',
   min: 'M6 12h12',
+  kopie: 'M9 9h10v11H9zM5 15V4h10',
+  op: 'M12 16V5M7 10l5-5 5 5M5 20h14',
   maan: 'M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z',
   pijl: 'M9 6l6 6-6 6',
   terug: 'M15 6l-6 6 6 6',

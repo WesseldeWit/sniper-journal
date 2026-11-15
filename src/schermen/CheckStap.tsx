@@ -84,7 +84,7 @@ export default function CheckStap({ dag, setDag }: { dag: Dag; setDag: (dag: Dag
 
   return (
     <div className="analyse">
-      <fieldset className="blok formulier" disabled={!vast || dag.besluit !== null || dag.checkKlaarOp !== null}>
+      <fieldset className="blok formulier" disabled={!vast || dag.besluit !== null || dag.checkKlaarOp !== null || Boolean(dag.afgeslotenOp)}>
         {!vast && <p className="zacht">Leg eerst het plan vast. Daarna vink je hier de confluences aan.</p>}
         <p className="zacht">Vink alleen aan wat je echt op de chart ziet.</p>
 
@@ -162,7 +162,7 @@ export default function CheckStap({ dag, setDag }: { dag: Dag; setDag: (dag: Dag
             </label>
           </div>
         )}
-        {vast && !dag.besluit && (
+        {vast && !dag.besluit && !dag.afgeslotenOp && (
           <div className="blok">
             {dag.checkKlaarOp ? (
               <button className="knop" onClick={() => bewaar({ ...dag, checkKlaarOp: null })}>

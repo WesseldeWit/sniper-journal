@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { vandaag } from '../hulp/datum'
+import { magAfsluiten } from '../regels/besluit'
 import StatusChip from '../onderdelen/StatusChip'
 import { dollars, getal, kort, leesGetal } from '../hulp/getal'
 import { schrijfDag, schrijfScreenshot, verwijderScreenshot, type Dag } from '../opslag/dagen'
@@ -34,6 +36,7 @@ export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: 
   const { instellingen } = useInstellingen()
   const a = dag.analyse
   const vast = dag.vastgelegdOp !== null
+  const dicht = Boolean(dag.afgeslotenOp)
 
   // Wat er letterlijk in de prijsvelden staat, zodat je '4000,' kunt typen zonder dat het verspringt.
   const [tekst, setTekst] = useState<Record<PrijsVeld, string>>(() => ({
@@ -132,7 +135,7 @@ export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: 
 
   return (
     <div className="analyse">
-      <fieldset className="blok formulier" disabled={vast}>
+      <fieldset className="blok formulier" disabled={vast || dicht}>
 
         <label className="veldgroep">
           <span className="label">Prediction</span>
@@ -268,8 +271,8 @@ export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: 
               })}
             </span>
             {!dag.besluit && <p>Zet nu een TradingView-alert op de zone en loop weg van het scherm.</p>}
-            {dag.besluit ? (
-              <span className="zacht">Er is een besluit genomen. Het plan kan niet meer worden gewijzigd.</span>
+            {dag.besluit || dicht ? (
+              <span className="zacht">De dag is afgerond. Het plan kan niet meer worden gewijzigd.</span>
             ) : (
               <button className="knop" onClick={() => bewaar({ ...dag, vastgelegdOp: null, checkKlaarOp: null })}>
                 Plan wijzigen
@@ -278,7 +281,7 @@ export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: 
           </div>
         ) : (
           <div className="blok">
-            <button className="knop primair" disabled={!oordeel.geldig} onClick={legVast}>
+            <button className="knop primair" disabled={!oordeel.geldig || dicht} onClick={legVast}>
               Plan vastleggen
             </button>
             <p className="zacht">
@@ -286,6 +289,11 @@ export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: 
                 ? 'Alle harde eisen kloppen. Leg het plan vast voordat de prijs de zone raakt.'
                 : 'Je invoer wordt bewaard als concept. Vastleggen kan pas als elke harde eis klopt.'}
             </p>
+            {!dicht && magAfsluiten(dag, vandaag()) && (
+              <button className="knop" onClick={() => bewaar({ ...dag, afgeslotenOp: new Date().toISOString() })}>
+                Vandaag geen setup: dag afsluiten
+              </button>
+            )}
           </div>
         )}
       </aside>

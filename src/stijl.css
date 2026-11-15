@@ -1699,3 +1699,160 @@ fieldset:disabled .confluences label {
     align-items: stretch;
   }
 }
+
+/* Orderkaart */
+
+.orderkaart,
+.managementkaart,
+.stapel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stapel {
+  gap: 20px;
+}
+
+.order-rij {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'naam knop' 'waarde knop';
+  align-items: center;
+  gap: 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--rand-sterk);
+  border-radius: var(--r-klein);
+  background: var(--vlak);
+}
+
+.order-naam {
+  grid-area: naam;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zacht);
+}
+
+.order-waarde {
+  grid-area: waarde;
+  font-size: 1.9rem;
+  line-height: 1.15;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.order-knop {
+  grid-area: knop;
+  min-height: 52px;
+  min-width: 118px;
+}
+
+/* Managementkaart */
+
+.niveau {
+  display: grid;
+  grid-template-columns: 24px 44px 96px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--rand-sterk);
+  border-radius: var(--r-klein);
+  background: var(--vlak);
+  cursor: pointer;
+  transition: border-color var(--snel), background var(--snel), opacity var(--snel);
+}
+
+.niveau input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--groen);
+}
+
+.niveau-naam {
+  font-weight: 650;
+  font-size: 1.1rem;
+}
+
+.niveau-prijs {
+  font-size: 1.1rem;
+  font-weight: 650;
+}
+
+.niveau-actie {
+  font-size: 0.9rem;
+  color: var(--zacht);
+}
+
+.niveau-lots {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.niveau.gehaald {
+  border-color: var(--groen);
+  background: var(--groen-zacht);
+}
+
+.niveau.wacht {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Klaar voor vandaag */
+
+.klaar {
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  border-color: var(--goud);
+}
+
+.klaar h2 {
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+}
+
+.klaar .leeg-icoon {
+  color: var(--goud);
+  background: var(--goud-zacht);
+}
+
+.klaar-streak .getal {
+  font-size: 1.6rem;
+  font-weight: 650;
+}
+
+@media (max-width: 760px) {
+  .niveau {
+    grid-template-columns: 24px 44px 1fr auto;
+    grid-template-areas: 'vink naam prijs lots' 'vink actie actie actie';
+    gap: 4px 12px;
+  }
+
+  .niveau input {
+    grid-area: vink;
+  }
+
+  .niveau-naam {
+    grid-area: naam;
+  }
+
+  .niveau-prijs {
+    grid-area: prijs;
+  }
+
+  .niveau-actie {
+    grid-area: actie;
+  }
+
+  .niveau-lots {
+    grid-area: lots;
+  }
+
+  .order-waarde {
+    font-size: 1.7rem;
+  }
+}

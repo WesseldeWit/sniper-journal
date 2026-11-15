@@ -15,6 +15,7 @@ import { leesGeheugen } from '../opslag/geheugen'
 import { dagbriefing, signalen } from '../regels/agent'
 import Briefing from './Briefing'
 import DagKaart from './DagKaart'
+import KlaarScherm from './KlaarScherm'
 import { useDag } from './useDag'
 
 export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => void }) {
@@ -81,6 +82,8 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
           </div>
         </div>
       </header>
+
+      {handelsdag && dag.afgeslotenOp && <KlaarScherm dag={dag} streak={streak} />}
 
       {handelsdag && (
         <Tijdlijn {...sessieVensters(datum)} zones={[]} nu={nlDatum(nu) === datum ? nlMinuten(nu) : null} />

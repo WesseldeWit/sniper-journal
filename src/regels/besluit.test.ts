@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   foutenBijGenomen,
+  isOpSlot,
+  magAfsluiten,
   isOngepland,
   magOverschrijven,
   neemTrade,
@@ -127,5 +129,23 @@ describe('slot op de opslag', () => {
 
   it('laat latere onderdelen zoals het resultaat wel toe', () => {
     expect(magOverschrijven(opSlot, { ...opSlot, resultaat: { r: 2.2 } } as DagMetBesluit)).toBe(true)
+  })
+})
+
+describe('dag afsluiten zonder trade', () => {
+  const dicht = { ...dag, afgeslotenOp: middag.toISOString() }
+
+  it('zet de dag op slot: geen trade en geen heropening meer', () => {
+    expect(isOpSlot(dicht)).toBe(true)
+    expect(genomen(dicht)).toHaveProperty('fouten')
+    expect(slaOver(dicht, i, middag, 'Toch niet')).toHaveProperty('fouten')
+    expect(magOverschrijven(dicht, { ...dicht, afgeslotenOp: null })).toBe(false)
+    expect(magOverschrijven(dicht, { ...dicht, confluences: [] })).toBe(false)
+  })
+
+  it('kan alleen op een open dag van vandaag of eerder', () => {
+    expect(magAfsluiten(dag, '2026-11-16')).toBe(true)
+    expect(magAfsluiten(dicht, '2026-11-16')).toBe(false)
+    expect(magAfsluiten({ ...dag, datum: '2026-11-17' }, '2026-11-16')).toBe(false)
   })
 })

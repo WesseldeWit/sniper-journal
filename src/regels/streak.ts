@@ -10,6 +10,7 @@ export interface DagVoorStreak {
   vastgelegdOp: string | null
   besluit: { soort: 'genomen' | 'niet-genomen'; ongepland: boolean } | null
   resultaat: Resultaat | null
+  afgeslotenOp?: string | null
 }
 
 export type DagScore = 'goed' | 'breuk' | 'neutraal'
@@ -25,7 +26,8 @@ export function scoreVanDag(dag: DagVoorStreak): DagScore {
     return regeltrouw(dag.besluit.ongepland, dag.resultaat).volgensRegels ? 'goed' : 'breuk'
   }
   if (dag.besluit?.soort === 'niet-genomen') return 'goed'
-  return dag.vastgelegdOp !== null || dag.analyse.prediction.trim() !== '' ? 'goed' : 'neutraal'
+  // Een afgesloten dag zonder trade telt mee: je hebt je regels gevolgd door niets te forceren.
+  return dag.afgeslotenOp || dag.vastgelegdOp !== null || dag.analyse.prediction.trim() !== '' ? 'goed' : 'neutraal'
 }
 
 /** Telt terug vanaf vandaag tot de laatste regelbreuk. Dagen in de toekomst tellen niet mee. */
