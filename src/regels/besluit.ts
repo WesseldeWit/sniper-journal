@@ -27,6 +27,8 @@ export interface DagMetBesluit extends DagInvoer {
   datum: DagSleutel
   checkKlaarOp?: string | null
   afgeslotenOp?: string | null
+  idee?: string
+  lezing?: unknown
   besluit: Besluit | null
 }
 
@@ -133,6 +135,8 @@ const VAST_NA_TRADE = [
   'checkKlaarOp',
   'besluit',
   'afgeslotenOp',
+  'idee',
+  'lezing',
 ] as const
 
 /**

@@ -121,3 +121,14 @@ export function klokTekst(minuten: number): string {
   const m = ((Math.round(minuten) % 1440) + 1440) % 1440
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
 }
+
+/**
+ * De sessie volgens de klok: voor de opening van New York telt de dag als Londen,
+ * daarna als New York. Na het sluiten van New York is er geen sessie meer.
+ */
+export function sessieVanKlok(nu: Date, datum: DagSleutel): 'londen' | 'newyork' | null {
+  if (nlDatum(nu) !== datum) return 'londen'
+  const { newyork } = sessieVensters(datum)
+  const m = nlMinuten(nu)
+  return m < newyork.van ? 'londen' : m < newyork.tot ? 'newyork' : null
+}

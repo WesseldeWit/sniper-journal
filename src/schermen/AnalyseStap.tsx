@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { vandaag } from '../hulp/datum'
 import { magAfsluiten } from '../regels/besluit'
 import StatusChip from '../onderdelen/StatusChip'
+import OchtendFlow from './OchtendFlow'
 import { dollars, getal, kort, leesGetal } from '../hulp/getal'
 import { schrijfDag, schrijfScreenshot, verwijderScreenshot, type Dag } from '../opslag/dagen'
 import { useInstellingen } from '../opslag/InstellingenContext'
@@ -30,9 +31,10 @@ interface Props {
   setDag: (dag: Dag) => void
   screenshot: Blob | null
   setScreenshot: (foto: Blob | null) => void
+  waarschuwingen?: { niveau: 'rood' | 'oranje'; tekst: string }[]
 }
 
-export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: Props) {
+export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot, waarschuwingen }: Props) {
   const { instellingen } = useInstellingen()
   const a = dag.analyse
   const vast = dag.vastgelegdOp !== null
@@ -59,6 +61,8 @@ export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: 
   }, [screenshot])
 
   const oordeel = beoordeelAnalyse(a, dag.heeftScreenshot, instellingen)
+  // Is er al iets met de hand ingevuld, dan blijft het formulier open.
+  const [handmatig, setHandmatig] = useState(() => a.fibLijn !== null || a.stop !== null || a.prediction.trim() !== '')
 
   function bewaar(nieuw: Dag) {
     setDag(nieuw)
@@ -92,6 +96,19 @@ export default function AnalyseStap({ dag, setDag, screenshot, setScreenshot }: 
     // De regels beslissen, niet de knop: een ongeldige analyse wordt nooit vastgelegd.
     if (!beoordeelAnalyse(a, dag.heeftScreenshot, instellingen).geldig) return
     bewaar({ ...dag, vastgelegdOp: new Date().toISOString() })
+  }
+
+  // De ochtendflow is de gewone weg: één screenshot en de agent vult de rest in.
+  if (!vast && !dicht && !handmatig) {
+    return (
+      <OchtendFlow
+        dag={dag}
+        setDag={setDag}
+        setScreenshot={setScreenshot}
+        waarschuwingen={waarschuwingen ?? []}
+        zelfInvullen={() => setHandmatig(true)}
+      />
+    )
   }
 
   const keuze = <T extends string>(

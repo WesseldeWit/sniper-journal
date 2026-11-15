@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { leesChart, LeesFout, type LeesAntwoord } from '../ai/lees'
 import { MODELLEN, type ModelId } from '../ai/modellen'
+import { LEEG_AGENT_GEHEUGEN } from '../ai/opdracht'
 import { oordeelUitLezing, PRIJS_EISEN } from '../ai/oordeel'
 import type { Lezing, Zekerheid } from '../ai/schema'
 import { leesSleutel } from '../ai/sleutel'
@@ -73,7 +74,7 @@ export default function AiTest({ naarInstellingen }: { naarInstellingen: () => v
       werkBij(kaart.id, (k) => ({ ...k, uitkomsten: { ...k.uitkomsten, [model]: { bezig: true } } }))
       let uitkomst: Uitkomst
       try {
-        uitkomst = { antwoord: await leesChart({ sleutel, model, afbeelding: kaart.bestand, idee: kaart.idee, werkwijze: [] }) }
+        uitkomst = { antwoord: await leesChart({ sleutel, model, afbeelding: kaart.bestand, idee: kaart.idee, geheugen: LEEG_AGENT_GEHEUGEN }) }
       } catch (fout) {
         uitkomst = { fout: fout instanceof LeesFout ? fout.message : 'Er ging iets mis.' }
       }

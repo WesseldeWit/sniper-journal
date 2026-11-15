@@ -247,3 +247,22 @@ export function signalen(ctx: AgentContext): Signaal[] {
   const uitgezet = ctx.instellingen.meldingenUit ?? []
   return uit.filter((s) => !uitgezet.includes(s.soort)).slice(0, MAX_SIGNALEN_PER_DAG)
 }
+
+/** De laatste trades als korte regels, zodat de AI ermee kan vergelijken. */
+export function tradeRegels(dagen: Dag[], aantal = 15): string[] {
+  return trades(dagen)
+    .slice(-aantal)
+    .map((d) => {
+      const delen = [
+        compacteDatum(d.datum),
+        d.analyse.richting ?? '',
+        d.analyse.model ? MODEL_NAMEN[d.analyse.model] : '',
+        d.analyse.sessie ? SESSIE_NAMEN[d.analyse.sessie] : '',
+        `${d.besluit!.aantalConfluences} extra`,
+        d.resultaat ? `${metTeken(d.resultaat.r)}R` : 'resultaat onbekend',
+        d.resultaat?.foutlabels.length ? `fouten: ${d.resultaat.foutlabels.join(', ')}` : '',
+        d.resultaat ? `nabespreking: ${d.resultaat.nabespreking.replace(/\s+/g, ' ').slice(0, 160)}` : '',
+      ]
+      return delen.filter(Boolean).join(' · ')
+    })
+}

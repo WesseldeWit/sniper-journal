@@ -3,6 +3,7 @@
 import type { DagSleutel } from '../hulp/datum'
 import { LEGE_ANALYSE, type Analyse } from '../regels/analyse'
 import { isOpSlot, magOverschrijven, type Besluit } from '../regels/besluit'
+import type { Lezing } from '../ai/schema'
 import { werkConfluencesBij, type ConfluenceId } from '../regels/check'
 import type { Resultaat } from '../regels/resultaat'
 import { lees, leesMetVoorvoegsel, schrijf, verwijder } from './opslag'
@@ -27,6 +28,10 @@ export interface Dag {
   management: { r1: string | null; r2: string | null; r3: string | null }
   /** Moment waarop de dag is afgesloten. Daarna is er geen nieuwe analyse of trade meer mogelijk. */
   afgeslotenOp: string | null
+  /** De zin die je bij de screenshot meestuurde. */
+  idee: string
+  /** Wat de agent van de screenshot aflas en erbij zei, zoals jij het hebt bevestigd. */
+  lezing: Lezing | null
   /** Vrije notitie bij deze dag. Blijft altijd te bewerken, ook als de dag op slot zit. */
   notitie: string
 }
@@ -44,6 +49,8 @@ export function legeDag(datum: DagSleutel): Dag {
     resultaat: null,
     management: { r1: null, r2: null, r3: null },
     afgeslotenOp: null,
+    idee: '',
+    lezing: null,
     notitie: '',
   }
 }

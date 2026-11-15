@@ -4,7 +4,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { kostenVan, type ModelId, type Verbruik } from './modellen'
-import { gebruikersTekst, systeemOpdracht } from './opdracht'
+import { gebruikersTekst, systeemOpdracht, type AgentGeheugen, type Vervolg } from './opdracht'
 import { LezingSchema, type Lezing } from './schema'
 
 export interface LeesVraag {
@@ -13,8 +13,10 @@ export interface LeesVraag {
   afbeelding: Blob
   /** De optionele zin van de trader bij de screenshot. */
   idee: string
-  /** De lijst "Zo analyseer ik". */
-  werkwijze: string[]
+  /** Wat de agent over de trader weet: werkwijze, lessen, laatste trades, playbook en FTMO-stand. */
+  geheugen: AgentGeheugen
+  /** Bij een tweede ronde: de vorige lezing met de antwoorden en correcties van de trader. */
+  vervolg?: Vervolg
 }
 
 export interface LeesAntwoord {
@@ -78,7 +80,7 @@ export async function leesChart(vraag: LeesVraag): Promise<LeesAntwoord> {
     const antwoord = await client.messages.parse({
       model: vraag.model,
       max_tokens: 16000,
-      system: systeemOpdracht(vraag.werkwijze),
+      system: systeemOpdracht(vraag.geheugen),
       messages: [
         {
           role: 'user',
@@ -87,7 +89,7 @@ export async function leesChart(vraag: LeesVraag): Promise<LeesAntwoord> {
               type: 'image',
               source: { type: 'base64', media_type: vraag.afbeelding.type as Soort, data: await alsBase64(vraag.afbeelding) },
             },
-            { type: 'text', text: gebruikersTekst(vraag.idee) },
+            { type: 'text', text: gebruikersTekst(vraag.idee, vraag.vervolg) },
           ],
         },
       ],

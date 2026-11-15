@@ -1856,3 +1856,84 @@ fieldset:disabled .confluences label {
     font-size: 1.7rem;
   }
 }
+
+/* Ochtendflow */
+
+.ochtend {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ochtend .invoer .tekstveld {
+  flex: 1;
+}
+
+.agent-zegt {
+  padding: 12px 14px;
+  border-left: 2px solid var(--goud);
+  background: var(--vlak-2);
+  border-radius: 0 var(--r-klein) var(--r-klein) 0;
+}
+
+.vraagkaart {
+  background: var(--vlak-2);
+  border-color: var(--goud);
+}
+
+.vraagkaart strong {
+  font-size: 1.1rem;
+}
+
+.keuze-chip {
+  min-height: 48px;
+  color: var(--tekst);
+  border-color: var(--rand-sterk);
+}
+
+.keuze-chip:hover {
+  border-color: var(--goud);
+}
+
+.tik {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-bottom: 1px dashed var(--rand-sterk);
+}
+
+.tik.grootgetal-waarde {
+  font-family: var(--mono);
+  font-size: 2rem;
+  font-weight: 650;
+  align-self: flex-start;
+}
+
+.gezien-lijst .tik {
+  border-bottom: 0;
+}
+
+.tegen {
+  background: var(--vlak-2);
+  gap: 6px;
+}
+
+.tegen .bovenkop:not(:first-child) {
+  margin-top: 8px;
+}
+
+.melding.let-op {
+  border: 1px solid var(--oranje);
+  background: var(--oranje-zacht);
+  color: var(--oranje);
+}
+
+@media (max-width: 760px) {
+  .tik.grootgetal-waarde {
+    font-size: 1.5rem;
+  }
+}

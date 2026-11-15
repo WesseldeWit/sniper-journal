@@ -50,6 +50,12 @@ export const LezingSchema = z.object({
       }),
     )
     .describe('Precies één regel per confluence, alle tien.'),
+  tegenargument: z
+    .string()
+    .describe('Advocaat van de duivel: het sterkste argument tegen deze trade, in één of twee zinnen. Geen kans of percentage.'),
+  vergelijking: z
+    .string()
+    .describe('Eén of twee zinnen over een eerdere trade of playbook-setup die hierop lijkt, met datum en uitkomst. Leeg als er niets vergelijkbaars is meegegeven.'),
   twijfelpunten: z.array(z.string()).describe('Waar de chart niet ondersteunt wat de trader zegt, of wat tegen de trade pleit.'),
   vragen: z
     .array(z.object({ vraag: z.string(), antwoorden: z.array(z.string()) }))

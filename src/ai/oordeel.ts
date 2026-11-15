@@ -53,3 +53,24 @@ export function oordeelUitLezing(lezing: Lezing, i: Instellingen): LezingOordeel
   )
   return { analyse, prijzenGeldig, check }
 }
+
+/** De dag zoals hij wordt als je deze lezing bevestigt. Er wordt hier niets opgeslagen. */
+export function dagMetLezing<D extends { analyse: Analyse; heeftScreenshot: boolean; confluences: ConfluenceId[]; idee: string; lezing: Lezing | null }>(
+  dag: D,
+  lezing: Lezing,
+  sessie: Analyse['sessie'],
+  idee: string,
+  i: Instellingen,
+): D {
+  return {
+    ...dag,
+    analyse: { ...analyseUitLezing(lezing, i), sessie, prediction: idee.trim() || lezing.beschrijving },
+    heeftScreenshot: true,
+    // Fibonacci en Entry models volgen automatisch uit het plan; de rest uit wat gezien is.
+    confluences: lezing.confluences
+      .filter((c) => c.gezien === 'gezien' && c.id !== 'fibonacci' && c.id !== 'entrymodel')
+      .map((c) => c.id as ConfluenceId),
+    idee: idee.trim(),
+    lezing,
+  }
+}

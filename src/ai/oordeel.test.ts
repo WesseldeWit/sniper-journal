@@ -3,7 +3,7 @@ import { EXTRA, VERPLICHT } from '../regels/check'
 import { STANDAARD_INSTELLINGEN as i } from '../regels/instellingen'
 import { kostenVan } from './modellen'
 import { analyseUitLezing, oordeelUitLezing } from './oordeel'
-import { systeemOpdracht } from './opdracht'
+import { LEEG_AGENT_GEHEUGEN, systeemOpdracht } from './opdracht'
 import { CONFLUENCE_IDS, LezingSchema, type Lezing } from './schema'
 
 const prijs = (waarde: number | null) => ({ waarde, zekerheid: 'zeker' as const, bron: 'positietool' })
@@ -23,6 +23,8 @@ const lezing: Lezing = {
     gezien: ['structuur', 'supplydemand', 'liquidity', 'poc', 'imbalance'].includes(id) ? 'gezien' : 'niet_gezien',
     uitleg: 'Test.',
   })),
+  tegenargument: 'De zone is al een keer aangetikt.',
+  vergelijking: '',
   twijfelpunten: [],
   vragen: [],
 }
@@ -38,10 +40,11 @@ describe('schema', () => {
   })
 
   it('noemt elke confluence in de opdracht en neemt de werkwijze mee', () => {
-    const tekst = systeemOpdracht(['Mijn zone teken ik altijd als grijze rechthoek.'])
+    const tekst = systeemOpdracht({ ...LEEG_AGENT_GEHEUGEN, werkwijze: ['Mijn zone teken ik altijd als grijze rechthoek.'], trades: ['3 nov: long, verlies'] })
     for (const id of CONFLUENCE_IDS) expect(tekst).toContain(`- ${id}:`)
     expect(tekst).toContain('grijze rechthoek')
-    expect(systeemOpdracht([])).not.toContain('Zo analyseert deze trader')
+    expect(tekst).toContain('3 nov: long, verlies')
+    expect(systeemOpdracht(LEEG_AGENT_GEHEUGEN)).not.toContain('Zo analyseert deze trader')
   })
 })
 
