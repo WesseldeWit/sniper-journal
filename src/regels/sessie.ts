@@ -58,3 +58,66 @@ export function volgendeHandelsdag(datum: DagSleutel, pauzes: Pauze[]): DagSleut
   for (let n = 0; n < 400 && !isHandelsdag(dag, pauzes); n++) dag = plusDagen(dag, 1)
   return dag
 }
+
+// ---- Tijden in Nederlandse tijd, voor de tijdlijn ----
+
+const NL = 'Europe/Amsterdam'
+
+function delenIn(moment: Date, tijdzone: string) {
+  const delen = new Intl.DateTimeFormat('en-GB', {
+    timeZone: tijdzone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(moment)
+  const n = (soort: string) => Number(delen.find((d) => d.type === soort)?.value)
+  return { jaar: n('year'), maand: n('month'), dag: n('day'), uur: n('hour'), minuut: n('minute') }
+}
+
+/** Het moment waarop het in deze tijdzone op deze datum zo laat is. */
+export function momentIn(tijdzone: string, datum: DagSleutel, uur: number, minuut = 0): Date {
+  const [j, m, d] = datum.split('-').map(Number)
+  const doel = Date.UTC(j, m - 1, d, uur, minuut)
+  let gok = doel
+  // Twee rondes zijn genoeg: de eerste vindt het tijdsverschil, de tweede corrigeert rond een klokwissel.
+  for (let ronde = 0; ronde < 2; ronde++) {
+    const k = delenIn(new Date(gok), tijdzone)
+    gok += doel - Date.UTC(k.jaar, k.maand - 1, k.dag, k.uur, k.minuut)
+  }
+  return new Date(gok)
+}
+
+/** Minuten sinds middernacht in Nederlandse tijd. */
+export function nlMinuten(moment: Date): number {
+  const k = delenIn(moment, NL)
+  return k.uur * 60 + k.minuut
+}
+
+/** De datum in Nederland op dit moment. */
+export function nlDatum(moment: Date): DagSleutel {
+  const k = delenIn(moment, NL)
+  return `${k.jaar}-${String(k.maand).padStart(2, '0')}-${String(k.dag).padStart(2, '0')}`
+}
+
+export interface Venster {
+  /** Minuten sinds middernacht, Nederlandse tijd. */
+  van: number
+  tot: number
+}
+
+/** De Londen- en New York-sessie van deze dag, in Nederlandse tijd. Volgt zomer- en wintertijd aan beide kanten. */
+export function sessieVensters(datum: DagSleutel): { londen: Venster; newyork: Venster } {
+  const venster = (s: (typeof SESSIES)[keyof typeof SESSIES]): Venster => ({
+    van: nlMinuten(momentIn(s.tijdzone, datum, s.open / 60)),
+    tot: nlMinuten(momentIn(s.tijdzone, datum, s.dicht / 60)),
+  })
+  return { londen: venster(SESSIES.londen), newyork: venster(SESSIES.newyork) }
+}
+
+export function klokTekst(minuten: number): string {
+  const m = ((Math.round(minuten) % 1440) + 1440) % 1440
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+}

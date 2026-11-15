@@ -2,13 +2,15 @@
    Statuskleuren zijn vast en komen altijd samen met een icoon of woord. */
 
 :root {
-  --bg: #0b0c0e;
-  --vlak: #131519;
-  --vlak-2: #1a1d22;
-  --rand: #24272e;
-  --rand-sterk: #343842;
+  --bg: #0a0b0d;
+  --vlak: #101216;
+  --vlak-2: #171a1f;
+  --rand: #22252b;
+  --rand-sterk: #33373f;
   --tekst: #ecebe7;
-  --zacht: #8d919b;
+  --zacht: #8b8f99;
+  --oranje: #e0a04a;
+  --oranje-zacht: rgba(224, 160, 74, 0.16);
   --goud: #d9ad4a;
   --goud-zacht: rgba(217, 173, 74, 0.12);
   --groen: #4cc38a;
@@ -17,8 +19,8 @@
   --rood-zacht: rgba(229, 115, 106, 0.12);
   --grijs: #a3a8b3;
 
-  --r-groot: 14px;
-  --r-klein: 10px;
+  --r-groot: 8px;
+  --r-klein: 6px;
   --snel: 200ms ease;
 
   --sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -36,7 +38,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--tekst);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -50,7 +52,7 @@ dd {
 }
 
 h1 {
-  font-size: 1.75rem;
+  font-size: 1.45rem;
   line-height: 1.2;
   letter-spacing: -0.02em;
   font-weight: 650;
@@ -667,7 +669,7 @@ input.prijs {
 
 .screenshot {
   width: 100%;
-  max-height: 420px;
+  max-height: 80vh;
   object-fit: contain;
   border: 1px solid var(--rand);
   border-radius: var(--r-klein);
@@ -1192,7 +1194,7 @@ fieldset:disabled .confluences label {
 
 @media (max-width: 760px) {
   body {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .app {
@@ -1438,5 +1440,184 @@ fieldset:disabled .confluences label {
   .gezien-lijst li {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+}
+
+/* Tijdlijn van vandaag */
+
+.tijdlijn {
+  gap: 10px;
+}
+
+.tl-kop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tl-kop strong {
+  font-size: 1.05rem;
+}
+
+.tl-baan {
+  position: relative;
+  height: 92px;
+  margin-top: 16px;
+}
+
+.tl-sessie {
+  position: absolute;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  background: var(--vlak-2);
+  color: var(--zacht);
+  border: 1px solid var(--rand-sterk);
+  transition: background var(--snel), color var(--snel), border-color var(--snel);
+}
+
+.tl-sessie.boven {
+  top: 6px;
+}
+
+.tl-sessie.onder {
+  top: 34px;
+}
+
+.tl-sessie.open {
+  background: var(--goud-zacht);
+  color: var(--goud);
+  border-color: var(--goud);
+}
+
+.tl-zone {
+  position: absolute;
+  top: 0;
+  bottom: 18px;
+  border-radius: 3px;
+}
+
+.tl-zone.rood {
+  background: var(--rood-zacht);
+  border-left: 2px solid var(--rood);
+  border-right: 2px solid var(--rood);
+}
+
+.tl-zone.oranje {
+  background: var(--oranje-zacht);
+  border-left: 2px dashed var(--oranje);
+  border-right: 2px dashed var(--oranje);
+}
+
+.tl-nu {
+  position: absolute;
+  top: -4px;
+  bottom: 14px;
+  width: 2px;
+  background: var(--tekst);
+}
+
+.tl-nu span {
+  position: absolute;
+  top: -14px;
+  left: -2px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  background: var(--tekst);
+  color: var(--bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.tl-nu span.links {
+  left: auto;
+  right: -2px;
+}
+
+.tl-uren {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--zacht);
+  border-top: 1px solid var(--rand);
+  padding-top: 3px;
+}
+
+.tl-voet {
+  font-size: 0.8rem;
+}
+
+/* Meters */
+
+.meters {
+  gap: 8px;
+}
+
+.meter {
+  position: relative;
+  height: 40px;
+  border-radius: var(--r-klein);
+  background: var(--vlak-2);
+  overflow: hidden;
+  border: 1px solid var(--rand);
+}
+
+.meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--goud-zacht);
+  border-right: 2px solid var(--goud);
+  transition: width 400ms ease;
+}
+
+.meter.groen i {
+  background: var(--groen-zacht);
+  border-right-color: var(--groen);
+}
+
+.meter.rood i {
+  background: var(--rood-zacht);
+  border-right-color: var(--rood);
+}
+
+.meter span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Kleine animatie als een stap is afgerond */
+
+.stap.klaar .stap-nummer {
+  animation: afgerond 450ms ease;
+}
+
+@keyframes afgerond {
+  0% {
+    transform: scale(0.6);
+    background: var(--groen);
+  }
+  60% {
+    transform: scale(1.15);
   }
 }

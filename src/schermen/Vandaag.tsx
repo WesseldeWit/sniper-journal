@@ -5,7 +5,11 @@ import Icoon from '../onderdelen/Icoon'
 import { leesAlleDagen, type Dag } from '../opslag/dagen'
 import { useInstellingen } from '../opslag/InstellingenContext'
 import { regeltrouw } from '../regels/resultaat'
-import { inPauze, isHandelsdag, sessieStatus, volgendeHandelsdag } from '../regels/sessie'
+import Meter from '../onderdelen/Meter'
+import Tijdlijn from '../onderdelen/Tijdlijn'
+import { dollars, kort } from '../hulp/getal'
+import { FTMO, ftmoStand } from '../regels/ftmo'
+import { inPauze, isHandelsdag, nlDatum, nlMinuten, sessieVensters, volgendeHandelsdag } from '../regels/sessie'
 import { berekenStreak } from '../regels/streak'
 import DagKaart from './DagKaart'
 import { useDag } from './useDag'
@@ -34,11 +38,16 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
 
   if (!dag) return null
 
-  const sessie = handelsdag ? sessieStatus(nu) : { londen: false, newyork: false }
   // Vandaag komt uit het scherm zelf, zodat de streak direct meeloopt met wat je invult.
   const metVandaag = [...alle.filter((d) => d.datum !== datum), dag]
   const streak = berekenStreak(metVandaag, datum)
   const genomen = dag.besluit?.soort === 'genomen'
+  const stand = ftmoStand(
+    metVandaag.flatMap((d) =>
+      d.resultaat && d.besluit ? [{ datum: d.datum, bedrag: d.resultaat.r * (d.besluit.bedrag ?? 0) }] : [],
+    ),
+    instellingen.accountGrootte,
+  )
 
   return (
     <section className="vandaag">
@@ -48,16 +57,6 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
           <h1 className="hoofdletter">{langeDatum(datum)}</h1>
         </div>
         <div className="dagkop-feiten">
-          <div className="sessies" aria-label="Sessies">
-            <span className={sessie.londen ? 'sessie open' : 'sessie'}>
-              <span className="lamp" aria-hidden="true" />
-              Londen <span className="zacht">{sessie.londen ? 'open' : 'dicht'}</span>
-            </span>
-            <span className={sessie.newyork ? 'sessie open' : 'sessie'}>
-              <span className="lamp" aria-hidden="true" />
-              New York <span className="zacht">{sessie.newyork ? 'open' : 'dicht'}</span>
-            </span>
-          </div>
           <div className="feit">
             <span className="feit-label">Streak</span>
             <span className="feit-waarde getal">{streak}</span>
@@ -73,6 +72,10 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
         </div>
       </header>
 
+      {handelsdag && (
+        <Tijdlijn {...sessieVensters(datum)} zones={[]} nu={nlDatum(nu) === datum ? nlMinuten(nu) : null} />
+      )}
+
       {handelsdag ? (
         <DagKaart dag={dag} setDag={setDag} screenshot={screenshot} setScreenshot={setScreenshot} />
       ) : (
@@ -83,6 +86,25 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
           naarGeschiedenis={naarGeschiedenis}
         />
       )}
+
+      <div className="blok meters">
+        <span className="bovenkop">FTMO-voortgang</span>
+        <Meter
+          naam="Winstdoel"
+          waarde={`${kort(stand.winstProcent)}% van ${FTMO.winstdoelProcent}%`}
+          deel={stand.winst / stand.winstdoel}
+        />
+        <Meter
+          naam="Buffer"
+          waarde={`${dollars(Math.round(stand.buffer))} van ${dollars(stand.bufferMax)}`}
+          deel={stand.buffer / stand.bufferMax}
+          kleur={stand.buffer / stand.bufferMax < 0.3 ? 'rood' : 'groen'}
+        />
+        <p className="zacht">
+          Ondergrens {dollars(Math.round(stand.ondergrens))}
+          {stand.besteDagProcent !== null && ` · beste dag ${kort(stand.besteDagProcent)}% van de winst (maximaal ${FTMO.besteDagMaxProcent}%)`}
+        </p>
+      </div>
     </section>
   )
 }
