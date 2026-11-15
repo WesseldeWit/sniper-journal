@@ -13,7 +13,7 @@ import BackupBlok from './BackupBlok'
 import PauzeBlok from './PauzeBlok'
 import { lotsize, maxRisicoProcent, pipWaardePerLot, risicoBedrag } from '../regels/risico'
 
-type Veld = 'ouncePerLot' | 'pipGrootte' | 'lotStap' | 'laag' | 'midden' | 'hoog'
+type Veld = 'ouncePerLot' | 'pipGrootte' | 'lotStap' | 'laag' | 'midden' | 'hoog' | 'nieuwsVoor' | 'nieuwsNa'
 
 function naarTekst(i: Instellingen): Record<Veld, string> {
   return {
@@ -23,6 +23,8 @@ function naarTekst(i: Instellingen): Record<Veld, string> {
     laag: kort(i.risicoTabel.laag),
     midden: kort(i.risicoTabel.midden),
     hoog: kort(i.risicoTabel.hoog),
+    nieuwsVoor: kort(i.nieuwsVoor),
+    nieuwsNa: kort(i.nieuwsNa),
   }
 }
 
@@ -36,6 +38,8 @@ export default function InstellingenScherm({ naarAiTest }: { naarAiTest: () => v
       accountGrootte,
       pauzes: instellingen.pauzes,
       meldingenUit: instellingen.meldingenUit,
+      nieuwsVoor: leesGetal(nieuweTekst.nieuwsVoor),
+      nieuwsNa: leesGetal(nieuweTekst.nieuwsNa),
       ouncePerLot: leesGetal(nieuweTekst.ouncePerLot),
       pipGrootte: leesGetal(nieuweTekst.pipGrootte),
       lotStap: leesGetal(nieuweTekst.lotStap),
@@ -123,6 +127,15 @@ export default function InstellingenScherm({ naarAiTest }: { naarAiTest: () => v
         </p>
         <div className="velden">
           {TREDEN.map((t) => veld(t.id, t.naam, '%'))}
+        </div>
+      </div>
+
+      <div className="blok">
+        <h2>Nieuwsblokkade</h2>
+        <p className="zacht">Rond rood nieuws kan een trade niet als genomen worden gemarkeerd.</p>
+        <div className="velden">
+          {veld('nieuwsVoor', 'Begint voor het nieuws', 'min')}
+          {veld('nieuwsNa', 'Eindigt na het nieuws', 'min')}
         </div>
       </div>
 

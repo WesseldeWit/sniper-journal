@@ -23,6 +23,9 @@ export interface Instellingen {
   risicoTabel: Record<RisicoTrede, number>
   /** Periodes waarin de dagen dicht staan, bijvoorbeeld de laatste weken van december. */
   pauzes: { van: string; tot: string }[]
+  /** Minuten voor en na zwaar nieuws waarin niet getraded mag worden. */
+  nieuwsVoor: number
+  nieuwsNa: number
   /** Soorten meldingen van de agent die zijn uitgezet. */
   meldingenUit: string[]
 }
@@ -34,6 +37,8 @@ export const STANDAARD_INSTELLINGEN: Instellingen = {
   lotStap: 0.01,
   risicoTabel: { laag: 0.5, midden: 0.75, hoog: 1 },
   pauzes: [],
+  nieuwsVoor: 30,
+  nieuwsNa: 30,
   meldingenUit: [],
 }
 
@@ -73,6 +78,11 @@ export function controleerInstellingen(i: Instellingen): string[] {
   }
   if (i.risicoTabel.laag > i.risicoTabel.midden || i.risicoTabel.midden > i.risicoTabel.hoog) {
     fouten.push('Minder extra confluences mag nooit een hoger risico geven dan meer.')
+  }
+  for (const [naam, minuten] of [['voor', i.nieuwsVoor], ['na', i.nieuwsNa]] as const) {
+    if (!Number.isInteger(minuten) || minuten < 0 || minuten > 240) {
+      fouten.push(`De nieuwsblokkade ${naam} het nieuws moet een heel aantal minuten zijn, van 0 tot 240.`)
+    }
   }
   const datum = /^\d{4}-\d{2}-\d{2}$/
   for (const p of i.pauzes ?? []) {

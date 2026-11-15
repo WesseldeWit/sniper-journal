@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNieuws } from '../opslag/nieuws'
+import { aftellen, blokkadeNu, venstersVoor } from '../regels/nieuws'
+import { klokTekst, nlDatum, nlMinuten } from '../regels/sessie'
 import Icoon from '../onderdelen/Icoon'
 import StatusChip from '../onderdelen/StatusChip'
 import { getal as toonGetal } from '../hulp/getal'
@@ -25,6 +28,13 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
   const [achteraf, setAchteraf] = useState(false)
   const [bevestigen, setBevestigen] = useState(false)
   const [fouten, setFouten] = useState<string[]>([])
+  const nieuws = useNieuws()
+  // De aftelklok van de blokkade loopt mee.
+  const [, setTik] = useState(0)
+  useEffect(() => {
+    const timer = setInterval(() => setTik((t) => t + 1), 20000)
+    return () => clearInterval(timer)
+  }, [])
 
 
   function bewaar(nieuw: Dag) {
@@ -43,6 +53,8 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
         ...dag,
         besluit: uitkomst.besluit,
         afgeslotenOp: uitkomst.besluit.soort === 'genomen' ? uitkomst.besluit.op : dag.afgeslotenOp,
+        // Bewaar bij de trade welk nieuws er die dag was.
+        nieuws: nieuws.bekend ? nieuws.items.filter((n) => n.datum === dag.datum) : null,
       })
     }
   }
@@ -109,7 +121,15 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
 
   const nu = vandaag()
   const toekomst = dag.datum > nu
-  const blokkades = foutenBijGenomen(dag, instellingen, nu)
+  // Rood nieuws: zolang het venster loopt, kan een trade niet als genomen worden gemarkeerd.
+  const klok = new Date()
+  const isVandaag = nlDatum(klok) === dag.datum
+  const vensters = isVandaag ? venstersVoor(nieuws.items, dag.datum, instellingen.nieuwsVoor, instellingen.nieuwsNa) : []
+  const lopend = nieuws.bekend ? blokkadeNu(vensters, nlMinuten(klok)) : null
+  const nieuwsBlokkade = lopend
+    ? `Nieuwsblokkade (${lopend.naam}): niet traden tot ${klokTekst(lopend.tot)}, nog ${aftellen(lopend.tot - nlMinuten(klok))}.`
+    : null
+  const blokkades = foutenBijGenomen(dag, instellingen, nu, nieuwsBlokkade)
   const magNemen = blokkades.length === 0
   const automatischOngepland = isOngepland(dag, false)
   const { analyse, check } = oordeelVanDag(dag, instellingen)
@@ -158,7 +178,7 @@ export default function BesluitStap({ dag, setDag }: { dag: Dag; setDag: (dag: D
                     <div className="rij-knoppen">
                       <button
                         className="knop primair"
-                        onClick={() => verwerk(neemTrade(dag, instellingen, new Date(), achteraf, nu))}
+                        onClick={() => verwerk(neemTrade(dag, instellingen, new Date(), achteraf, nu, nieuwsBlokkade))}
                       >
                         Ja, trade genomen
                       </button>

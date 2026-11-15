@@ -14,7 +14,10 @@ import { berekenStreak } from '../regels/streak'
 import { leesGeheugen } from '../opslag/geheugen'
 import { dagbriefing, signalen } from '../regels/agent'
 import Briefing from './Briefing'
+import { useNieuws } from '../opslag/nieuws'
+import { nieuwsWaarschuwingen, venstersVoor } from '../regels/nieuws'
 import DagKaart from './DagKaart'
+import NieuwsBlok from './NieuwsBlok'
 import KlaarScherm from './KlaarScherm'
 import { useDag } from './useDag'
 
@@ -26,6 +29,7 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
   const [alle, setAlle] = useState<Dag[]>([])
   const [nu, setNu] = useState(() => new Date())
   const [lessen, setLessen] = useState<string[]>([])
+  const nieuws = useNieuws()
 
   useEffect(() => {
     void leesGeheugen().then((g) => setLessen(g.lessen.map((l) => l.tekst)))
@@ -51,8 +55,8 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
   const metVandaag = [...alle.filter((d) => d.datum !== datum), dag]
   const streak = berekenStreak(metVandaag, datum)
   const genomen = dag.besluit?.soort === 'genomen'
-  // Nieuws komt in deel 8; tot die tijd meldt de agent eerlijk dat het onbekend is.
-  const agent = { vandaag: datum, nu, dagen: metVandaag, instellingen, lessen, nieuws: [], nieuwsBekend: false }
+  const vensters = venstersVoor(nieuws.items, datum, instellingen.nieuwsVoor, instellingen.nieuwsNa)
+  const agent = { vandaag: datum, nu, dagen: metVandaag, instellingen, lessen, nieuws: vensters, nieuwsBekend: nieuws.bekend }
   const stand = ftmoStand(
     metVandaag.flatMap((d) =>
       d.resultaat && d.besluit ? [{ datum: d.datum, bedrag: d.resultaat.r * (d.besluit.bedrag ?? 0) }] : [],
@@ -86,13 +90,22 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
       {handelsdag && dag.afgeslotenOp && <KlaarScherm dag={dag} streak={streak} />}
 
       {handelsdag && (
-        <Tijdlijn {...sessieVensters(datum)} zones={[]} nu={nlDatum(nu) === datum ? nlMinuten(nu) : null} />
+        <Tijdlijn {...sessieVensters(datum)} zones={nieuws.bekend ? vensters : []} nu={nlDatum(nu) === datum ? nlMinuten(nu) : null} />
       )}
 
       {handelsdag && <Briefing datum={datum} regels={dagbriefing(agent)} signalen={signalen(agent)} />}
 
       {handelsdag ? (
-        <DagKaart dag={dag} setDag={setDag} screenshot={screenshot} setScreenshot={setScreenshot} />
+        <>
+          <NieuwsBlok nieuws={nieuws} datum={datum} nu={nu} voor={instellingen.nieuwsVoor} na={instellingen.nieuwsNa} />
+          <DagKaart
+            dag={dag}
+            setDag={setDag}
+            screenshot={screenshot}
+            setScreenshot={setScreenshot}
+            waarschuwingen={nieuws.bekend ? nieuwsWaarschuwingen(vensters, nlMinuten(nu)) : [{ niveau: 'oranje', tekst: 'Nieuws onbekend, controleer zelf de economische kalender.' }]}
+          />
+        </>
       ) : (
         <MarktDicht
           pauze={inPauze(datum, instellingen.pauzes)}

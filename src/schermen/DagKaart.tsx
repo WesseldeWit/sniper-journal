@@ -18,10 +18,12 @@ interface Props {
   setDag: (dag: Dag) => void
   screenshot: Blob | null
   setScreenshot: (foto: Blob | null) => void
+  /** Waarschuwingen over het nieuws van vandaag, voor bij de ochtendanalyse. */
+  waarschuwingen?: { niveau: 'rood' | 'oranje'; tekst: string }[]
 }
 
 /** De vier stappen van een dag onder elkaar. Alleen de stap die aan de beurt is staat open. */
-export default function DagKaart({ dag, setDag, screenshot, setScreenshot }: Props) {
+export default function DagKaart({ dag, setDag, screenshot, setScreenshot, waarschuwingen }: Props) {
   const { instellingen } = useInstellingen()
   const huidig = huidigeStap(dag)
   const [open, setOpen] = useState<StapId | null>(huidig)
@@ -90,7 +92,9 @@ export default function DagKaart({ dag, setDag, screenshot, setScreenshot }: Pro
   }
 
   const inhoud: Record<StapId, ReactNode> = {
-    analyse: <AnalyseStap dag={dag} setDag={setDag} screenshot={screenshot} setScreenshot={setScreenshot} />,
+    analyse: (
+      <AnalyseStap dag={dag} setDag={setDag} screenshot={screenshot} setScreenshot={setScreenshot} waarschuwingen={waarschuwingen} />
+    ),
     check: <CheckStap dag={dag} setDag={setDag} />,
     besluit: <BesluitStap dag={dag} setDag={setDag} />,
     resultaat: (

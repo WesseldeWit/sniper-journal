@@ -56,8 +56,15 @@ function algemeneFouten(dag: DagMetBesluit, vandaag: DagSleutel): string[] {
 }
 
 /** Lege lijst = de trade mag als genomen worden opgeslagen. */
-export function foutenBijGenomen(dag: DagMetBesluit, i: Instellingen, vandaag: DagSleutel): string[] {
+export function foutenBijGenomen(
+  dag: DagMetBesluit,
+  i: Instellingen,
+  vandaag: DagSleutel,
+  /** Reden van een lopende nieuwsblokkade, of leeg als er geen is. */
+  nieuwsBlokkade: string | null = null,
+): string[] {
   const fouten = algemeneFouten(dag, vandaag)
+  if (nieuwsBlokkade) fouten.push(nieuwsBlokkade)
   if (dag.besluit?.soort === 'niet-genomen') fouten.push('Deze dag staat al op niet genomen.')
   const { check } = oordeelVanDag(dag, i)
   if (!check.goedgekeurd) fouten.push('De trade is afgekeurd en kan niet als genomen worden opgeslagen.')
@@ -78,8 +85,9 @@ export function neemTrade(
   nu: Date,
   zelfOngepland: boolean,
   vandaag: DagSleutel = naarSleutel(nu),
+  nieuwsBlokkade: string | null = null,
 ): { besluit: Besluit } | { fouten: string[] } {
-  const fouten = foutenBijGenomen(dag, i, vandaag)
+  const fouten = foutenBijGenomen(dag, i, vandaag, nieuwsBlokkade)
   if (fouten.length > 0) return { fouten }
   const { check } = oordeelVanDag(dag, i)
   return {

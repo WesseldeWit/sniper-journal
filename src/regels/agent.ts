@@ -8,6 +8,7 @@ import { MODEL_NAMEN, SESSIE_NAMEN } from './analyse'
 import { oordeelVanDag } from './dagoordeel'
 import { ftmoStand } from './ftmo'
 import type { Instellingen } from './instellingen'
+import type { NieuwsVenster } from './nieuws'
 import { FOUTLABELS, regeltrouw } from './resultaat'
 import { klokTekst, nlMinuten, sessieVensters, type Venster } from './sessie'
 import { berekenStreak } from './streak'
@@ -36,10 +37,6 @@ export interface BriefingRegel {
   tekst: string
 }
 
-export interface NieuwsVenster extends Venster {
-  niveau: 'rood' | 'oranje'
-  naam: string
-}
 
 export interface AgentContext {
   vandaag: DagSleutel

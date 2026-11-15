@@ -1,0 +1,53 @@
+# Zet Sniper Journal online via GitHub Pages en ververst de economische kalender.
+# Nog niet getest: dit gaat pas lopen zodra de code op GitHub staat en Pages is aangezet
+# (Settings → Pages → Source: GitHub Actions).
+name: Online zetten
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Elk uur, zodat de kalender in de online versie vers blijft.
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  bouwen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Haal de economische kalender op
+        # Lukt het ophalen niet, dan toont de app "nieuws onbekend, controleer zelf".
+        run: |
+          mkdir -p public/nieuws
+          curl --fail --silent --show-error --max-time 30 \
+            -o public/nieuws/thisweek.json \
+            https://nfs.faireconomy.media/ff_calendar_thisweek.json || rm -f public/nieuws/thisweek.json
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  publiceren:
+    needs: bouwen
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pagina.outputs.page_url }}
+    steps:
+      - id: pagina
+        uses: actions/deploy-pages@v4
