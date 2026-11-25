@@ -37,6 +37,8 @@ export interface Dag {
   lezing: Lezing | null
   /** Vrije notitie bij deze dag. Blijft altijd te bewerken, ook als de dag op slot zit. */
   notitie: string
+  /** Winst of verlies in dollars van een trade buiten de app om, zonder entry, stop of lots. */
+  buitenApp: number | null
 }
 
 export function legeDag(datum: DagSleutel): Dag {
@@ -56,6 +58,7 @@ export function legeDag(datum: DagSleutel): Dag {
     idee: '',
     lezing: null,
     notitie: '',
+    buitenApp: null,
   }
 }
 

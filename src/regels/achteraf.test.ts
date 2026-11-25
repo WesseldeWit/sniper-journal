@@ -30,3 +30,14 @@ describe('trade achteraf', () => {
     expect(regeltrouw(true, { entryVolgensPlan: true, stopVolgensPlan: true, exitsVolgensPlan: true, foutlabels: [] }).volgensRegels).toBe(false)
   })
 })
+
+import { ftmoStand, uitkomstenVanDagen } from './ftmo'
+import { scoreVanDag } from './streak'
+
+describe('resultaat buiten de app om', () => {
+  it('telt mee in de FTMO-stand en als regelbreuk', () => {
+    const dag = { ...legeDag('2026-11-25'), buitenApp: 1394.46 }
+    expect(ftmoStand(uitkomstenVanDagen([dag]), 50000).saldo).toBe(51394.46)
+    expect(scoreVanDag(dag)).toBe('breuk')
+  })
+})

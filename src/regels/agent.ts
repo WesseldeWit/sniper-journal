@@ -6,7 +6,7 @@ import { dollars, kort, metTeken } from '../hulp/getal'
 import type { Dag } from '../opslag/dagen'
 import { MODEL_NAMEN, SESSIE_NAMEN } from './analyse'
 import { oordeelVanDag } from './dagoordeel'
-import { ftmoStand } from './ftmo'
+import { ftmoStand, uitkomstenVanDagen } from './ftmo'
 import type { Instellingen } from './instellingen'
 import type { NieuwsVenster } from './nieuws'
 import { FOUTLABELS, regeltrouw } from './resultaat'
@@ -135,10 +135,7 @@ export function dagbriefing(ctx: AgentContext): BriefingRegel[] {
     tekst: vrij.length ? vrij.map((v) => `${klokTekst(v.van)}–${klokTekst(v.tot)}`).join(' en ') + ' (Nederlandse tijd).' : 'Vandaag geen vrije uren.',
   })
 
-  const stand = ftmoStand(
-    ctx.dagen.flatMap((d) => (d.resultaat && d.besluit ? [{ datum: d.datum, bedrag: d.resultaat.r * (d.besluit.bedrag ?? 0) }] : [])),
-    ctx.instellingen.accountGrootte,
-  )
+  const stand = ftmoStand(uitkomstenVanDagen(ctx.dagen), ctx.instellingen.accountGrootte)
   regels.push({
     kop: 'Buffer',
     tekst: `${dollars(Math.round(stand.buffer))} van ${dollars(stand.bufferMax)}. Stand: ${metTeken(stand.winstProcent)}% richting het doel van 10%.`,

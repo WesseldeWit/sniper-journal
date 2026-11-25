@@ -8,7 +8,7 @@ import { regeltrouw } from '../regels/resultaat'
 import Meter from '../onderdelen/Meter'
 import Tijdlijn from '../onderdelen/Tijdlijn'
 import { dollars, kort } from '../hulp/getal'
-import { FTMO, ftmoStand } from '../regels/ftmo'
+import { FTMO, ftmoStand, uitkomstenVanDagen } from '../regels/ftmo'
 import { inPauze, isHandelsdag, nlDatum, nlMinuten, sessieVensters, volgendeHandelsdag } from '../regels/sessie'
 import { berekenStreak } from '../regels/streak'
 import { leesGeheugen } from '../opslag/geheugen'
@@ -57,12 +57,7 @@ export default function Vandaag({ naarGeschiedenis }: { naarGeschiedenis: () => 
   const genomen = dag.besluit?.soort === 'genomen'
   const vensters = venstersVoor(nieuws.items, datum, instellingen.nieuwsVoor, instellingen.nieuwsNa)
   const agent = { vandaag: datum, nu, dagen: metVandaag, instellingen, lessen, nieuws: vensters, nieuwsBekend: nieuws.bekend }
-  const stand = ftmoStand(
-    metVandaag.flatMap((d) =>
-      d.resultaat && d.besluit ? [{ datum: d.datum, bedrag: d.resultaat.r * (d.besluit.bedrag ?? 0) }] : [],
-    ),
-    instellingen.accountGrootte,
-  )
+  const stand = ftmoStand(uitkomstenVanDagen(metVandaag), instellingen.accountGrootte)
 
   return (
     <section className="vandaag">

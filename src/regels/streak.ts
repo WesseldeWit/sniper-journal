@@ -11,6 +11,7 @@ export interface DagVoorStreak {
   besluit: { soort: 'genomen' | 'niet-genomen'; ongepland: boolean } | null
   resultaat: Resultaat | null
   afgeslotenOp?: string | null
+  buitenApp?: number | null
 }
 
 export type DagScore = 'goed' | 'breuk' | 'neutraal'
@@ -21,6 +22,8 @@ export type DagScore = 'goed' | 'breuk' | 'neutraal'
  * neutraal = telt niet mee en breekt niets: een lege dag, of een trade waarvan het resultaat nog ontbreekt.
  */
 export function scoreVanDag(dag: DagVoorStreak): DagScore {
+  // Een trade buiten de app om stond niet vooraf in je plan.
+  if (dag.buitenApp) return 'breuk'
   if (dag.besluit?.soort === 'genomen') {
     if (!dag.resultaat) return 'neutraal'
     return regeltrouw(dag.besluit.ongepland, dag.resultaat).volgensRegels ? 'goed' : 'breuk'

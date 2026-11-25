@@ -17,7 +17,7 @@ import { patronen, tradeRegels } from '../regels/agent'
 import { MODEL_NAMEN } from '../regels/analyse'
 import { EXTRA, VERPLICHT } from '../regels/check'
 import { oordeelVanDag } from '../regels/dagoordeel'
-import { ftmoStand } from '../regels/ftmo'
+import { ftmoStand, uitkomstenVanDagen } from '../regels/ftmo'
 import { sessieVanKlok } from '../regels/sessie'
 
 const NAMEN = Object.fromEntries([...VERPLICHT, ...EXTRA].map((c) => [c.id, c.naam]))
@@ -68,10 +68,7 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
   // Wat de agent bij elk gesprek bij de hand heeft: regels, lessen, werkwijze, laatste trades, playbook en FTMO-stand.
   useEffect(() => {
     void Promise.all([leesGeheugen(), leesAlleDagen(), leesPlaybook()]).then(([g, dagen, playbook]) => {
-      const stand = ftmoStand(
-        dagen.flatMap((d) => (d.resultaat && d.besluit ? [{ datum: d.datum, bedrag: d.resultaat.r * (d.besluit.bedrag ?? 0) }] : [])),
-        instellingen.accountGrootte,
-      )
+      const stand = ftmoStand(uitkomstenVanDagen(dagen), instellingen.accountGrootte)
       setGeheugen({
         werkwijze: g.werkwijze,
         lessen: g.lessen.map((l) => l.tekst),

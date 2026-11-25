@@ -13,6 +13,7 @@ import CheckStap from './CheckStap'
 import ManagementKaart from './ManagementKaart'
 import ResultaatStap from './ResultaatStap'
 import TradeAchteraf from './TradeAchteraf'
+import BuitenAppBlok from './BuitenAppBlok'
 import { vandaag } from '../hulp/datum'
 
 interface Props {
@@ -144,6 +145,7 @@ export default function DagKaart({ dag, setDag, screenshot, setScreenshot, waars
       </ol>
 
       {!dag.besluit && !dag.afgeslotenOp && dag.datum <= vandaag() && <TradeAchteraf dag={dag} setDag={setDag} />}
+      {dag.datum <= vandaag() && <BuitenAppBlok dag={dag} setDag={setDag} />}
 
       <label className="blok veldgroep">
         <span className="label">Notitie bij deze dag</span>
