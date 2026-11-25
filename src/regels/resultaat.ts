@@ -15,6 +15,8 @@ export type Foutlabel = (typeof FOUTLABELS)[number]['id']
 export interface ResultaatInvoer {
   /** Uitkomst in R. -1 is een volle stop, 0 is break-even. */
   r: number | null
+  /** Winst of verlies in dollars, zoals je het in MT5 of bij FTMO ziet. */
+  dollars?: number | null
   /** Verste stand in het voordeel, in R. */
   verstVoor: number | null
   /** Verste stand in het nadeel, in R (als positief getal). */
@@ -28,6 +30,8 @@ export interface ResultaatInvoer {
 
 export interface Resultaat {
   r: number
+  /** Winst of verlies in dollars. Leeg bij oudere resultaten: dan geldt R x risicobedrag. */
+  dollars?: number
   verstVoor: number
   verstTegen: number
   entryVolgensPlan: boolean
@@ -41,6 +45,7 @@ export interface Resultaat {
 
 export const LEEG_RESULTAAT: ResultaatInvoer = {
   r: null,
+  dollars: null,
   verstVoor: null,
   verstTegen: null,
   entryVolgensPlan: null,
@@ -53,9 +58,9 @@ export const LEEG_RESULTAAT: ResultaatInvoer = {
 /** Lege lijst = het resultaat mag worden opgeslagen. */
 export function foutenInResultaat(x: ResultaatInvoer): string[] {
   const fouten: string[] = []
-  if (x.r === null) fouten.push('Vul de uitkomst in R in.')
-  if (x.verstVoor === null || x.verstVoor < 0) fouten.push('Vul de verste stand in het voordeel in (0 of hoger).')
-  if (x.verstTegen === null || x.verstTegen < 0) fouten.push('Vul de verste stand in het nadeel in (0 of hoger).')
+  if (x.r === null) fouten.push('Vul je winst of verlies in.')
+  if (x.verstVoor !== null && x.verstVoor < 0) fouten.push('De verste stand in het voordeel is 0 of hoger.')
+  if (x.verstTegen !== null && x.verstTegen < 0) fouten.push('De verste stand in het nadeel is 0 of hoger.')
   if (x.r !== null && x.verstVoor !== null && x.verstVoor >= 0 && x.r > x.verstVoor + 1e-9) {
     fouten.push('De uitkomst kan niet hoger zijn dan de verste stand in het voordeel.')
   }
@@ -65,7 +70,6 @@ export function foutenInResultaat(x: ResultaatInvoer): string[] {
   if (x.entryVolgensPlan === null || x.stopVolgensPlan === null || x.exitsVolgensPlan === null) {
     fouten.push('Beantwoord de drie vragen over regeltrouw.')
   }
-  if (!x.nabespreking.trim()) fouten.push('Beantwoord beide vragen van de nabespreking.')
   return fouten
 }
 
@@ -99,7 +103,18 @@ export function regeltrouw(
 export function inGeld(
   r: number,
   besluit: { bedrag: number | null; risicoProcent: number | null },
+  dollars?: number | null,
 ): { dollars: number; procent: number } {
   const rond = (n: number) => Number(n.toFixed(2))
+  if (dollars !== undefined && dollars !== null) {
+    const procent = besluit.bedrag && besluit.risicoProcent ? (dollars / besluit.bedrag) * besluit.risicoProcent : 0
+    return { dollars: rond(dollars), procent: rond(procent) }
+  }
   return { dollars: rond(r * (besluit.bedrag ?? 0)), procent: rond(r * (besluit.risicoProcent ?? 0)) }
+}
+
+/** R uit dollars: winst of verlies gedeeld door het risicobedrag. Leeg zonder risicobedrag. */
+export function rUitDollars(dollars: number, bedrag: number | null): number {
+  if (!bedrag || bedrag <= 0) return 0
+  return Number((dollars / bedrag).toFixed(2))
 }

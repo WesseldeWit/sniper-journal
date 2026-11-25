@@ -32,11 +32,11 @@ export interface FtmoStand {
 
 /** Alle bedragen die je account hebben veranderd: trades in de app en resultaten buiten de app om. */
 export function uitkomstenVanDagen(
-  dagen: { datum: string; resultaat: { r: number } | null; besluit: { bedrag: number | null } | null; buitenApp?: number | null }[],
+  dagen: { datum: string; resultaat: { r: number; dollars?: number } | null; besluit: { bedrag: number | null } | null; buitenApp?: number | null }[],
 ): TradeUitkomst[] {
   return dagen.flatMap((d) => {
     const lijst: TradeUitkomst[] = []
-    if (d.resultaat && d.besluit) lijst.push({ datum: d.datum, bedrag: d.resultaat.r * (d.besluit.bedrag ?? 0) })
+    if (d.resultaat && d.besluit) lijst.push({ datum: d.datum, bedrag: d.resultaat.dollars ?? d.resultaat.r * (d.besluit.bedrag ?? 0) })
     if (d.buitenApp) lijst.push({ datum: d.datum, bedrag: d.buitenApp })
     return lijst
   })

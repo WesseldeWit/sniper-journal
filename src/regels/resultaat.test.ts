@@ -35,7 +35,7 @@ describe('resultaat controleren', () => {
   it('weigert een onvolledig resultaat', () => {
     expect(foutenInResultaat({ ...invoer, r: null }).length).toBe(1)
     expect(foutenInResultaat({ ...invoer, exitsVolgensPlan: null }).length).toBe(1)
-    expect(foutenInResultaat({ ...invoer, nabespreking: ' ' }).length).toBe(1)
+    expect(foutenInResultaat({ ...invoer, nabespreking: ' ' }).length).toBe(0)
   })
 
   it('weigert een uitkomst die niet past bij de verste standen', () => {

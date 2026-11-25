@@ -9,11 +9,12 @@ import {
   inGeld,
   LEEG_RESULTAAT,
   regeltrouw,
+  rUitDollars,
   type Foutlabel,
   type ResultaatInvoer,
 } from '../regels/resultaat'
 
-type GetalVeld = 'r' | 'verstVoor' | 'verstTegen'
+type GetalVeld = 'dollars' | 'verstVoor' | 'verstTegen'
 type VraagVeld = 'entryVolgensPlan' | 'stopVolgensPlan' | 'exitsVolgensPlan'
 
 const VRAGEN: { veld: VraagVeld; tekst: string }[] = [
@@ -27,13 +28,13 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
   const bewaard = dag.resultaat
   const [bewerken, setBewerken] = useState(bewaard === null)
   const [invoer, setInvoer] = useState<ResultaatInvoer>(bewaard ?? LEEG_RESULTAAT)
+  const [details, setDetails] = useState(false)
   const [tekst, setTekst] = useState<Record<GetalVeld, string>>({
-    r: bewaard ? kort(bewaard.r) : '',
+    dollars: bewaard ? kort(bewaard.dollars ?? inGeld(bewaard.r, dag.besluit ?? { bedrag: null, risicoProcent: null }).dollars) : '',
     verstVoor: bewaard ? kort(bewaard.verstVoor) : '',
     verstTegen: bewaard ? kort(bewaard.verstTegen) : '',
   })
   const [fouten, setFouten] = useState<string[]>([])
-  const [antwoorden, setAntwoorden] = useState<[string, string]>(['', ''])
   const [foto, setFoto] = useState<Blob | null>(null)
   const [fotoUrl, setFotoUrl] = useState<string | null>(null)
 
@@ -59,8 +60,13 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
 
   function wijzigGetal(veld: GetalVeld, waarde: string) {
     setTekst({ ...tekst, [veld]: waarde })
-    const n = leesGetal(waarde, veld === 'r')
-    setInvoer({ ...invoer, [veld]: Number.isNaN(n) ? null : n })
+    const n = leesGetal(waarde, veld === 'dollars')
+    const getal = Number.isNaN(n) ? null : n
+    if (veld === 'dollars') {
+      setInvoer({ ...invoer, dollars: getal, r: getal === null ? null : rUitDollars(getal, besluit?.bedrag ?? null) })
+    } else {
+      setInvoer({ ...invoer, [veld]: getal })
+    }
   }
 
   function wisselLabel(id: Foutlabel) {
@@ -87,8 +93,9 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
       ...dag,
       resultaat: {
         r: invoer.r!,
-        verstVoor: invoer.verstVoor!,
-        verstTegen: invoer.verstTegen!,
+        ...(invoer.dollars !== undefined && invoer.dollars !== null ? { dollars: invoer.dollars } : {}),
+        verstVoor: invoer.verstVoor ?? Math.max(invoer.r!, 0),
+        verstTegen: invoer.verstTegen ?? Math.max(-invoer.r!, 0),
         entryVolgensPlan: invoer.entryVolgensPlan!,
         stopVolgensPlan: invoer.stopVolgensPlan!,
         exitsVolgensPlan: invoer.exitsVolgensPlan!,
@@ -105,16 +112,16 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
 
   // Samenvatting van een opgeslagen resultaat.
   if (bewaard && !bewerken) {
-    const geld = inGeld(bewaard.r, besluit)
+    const geld = inGeld(bewaard.r, besluit, bewaard.dollars)
     const score = regeltrouw(besluit.ongepland, bewaard)
     return (
       <div className="blok">
         <div className="uitkomst">
-          <span className={bewaard.r > 0 ? 'uitkomst-r plus' : bewaard.r < 0 ? 'uitkomst-r min' : 'uitkomst-r'}>
-            {metTeken(bewaard.r)}R
+          <span className={geld.dollars > 0 ? 'uitkomst-r plus' : geld.dollars < 0 ? 'uitkomst-r min' : 'uitkomst-r'}>
+            {geld.dollars > 0 ? '+' : ''}{dollars(geld.dollars)}
           </span>
           <span className="zacht">
-            {dollars(geld.dollars)} · {metTeken(geld.procent)}%
+            {metTeken(bewaard.r)}R · {metTeken(geld.procent)}%
           </span>
         </div>
         <div className={score.volgensRegels ? 'regeltrouw goed' : 'regeltrouw breuk'}>
@@ -138,10 +145,12 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
           <dd>{metTeken(-bewaard.verstTegen)}R</dd>
         </dl>
         {fotoUrl && <img className="screenshot" src={fotoUrl} alt="Screenshot achteraf" />}
-        <div>
-          <span className="label">Nabespreking</span>
-          <p className="vrije-tekst">{bewaard.nabespreking}</p>
-        </div>
+        {bewaard.nabespreking.trim() && (
+          <div>
+            <span className="label">Wat je meeneemt</span>
+            <p className="vrije-tekst">{bewaard.nabespreking}</p>
+          </div>
+        )}
         <button className="knop zelf" onClick={() => setBewerken(true)}>
           Resultaat wijzigen
         </button>
@@ -149,7 +158,7 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
     )
   }
 
-  const geld = invoer.r !== null ? inGeld(invoer.r, besluit) : null
+  const geld = invoer.r !== null ? inGeld(invoer.r, besluit, invoer.dollars) : null
   const vragen = nabesprekingsVragen({
     r: invoer.r,
     volgensPlan:
@@ -167,12 +176,12 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
         <input
           className="prijs"
           type="text"
-          inputMode={veld === 'r' ? 'text' : 'decimal'}
-          placeholder={veld === 'r' ? '-1 of 2,6' : '0'}
+          inputMode={veld === 'dollars' ? 'text' : 'decimal'}
+          placeholder={veld === 'dollars' ? '1394,46 of -250' : '0'}
           value={tekst[veld]}
           onChange={(e) => wijzigGetal(veld, e.target.value)}
         />
-        <span className="eenheid">R</span>
+        <span className="eenheid">{veld === 'dollars' ? '$' : 'R'}</span>
       </span>
       <span className="zacht">{hulp}</span>
     </label>
@@ -180,15 +189,23 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
 
   return (
     <div className="blok formulier">
-      <div className="rij">
-        {getalVeld(
-          'r',
-          'Uitkomst',
-          geld ? `${dollars(geld.dollars)} · ${metTeken(geld.procent)}%` : '-1 is een volle stop, 0 is break-even.',
-        )}
-        {getalVeld('verstVoor', 'Verste stand in het voordeel', 'Hoe ver liep de prijs maximaal jouw kant op?')}
-        {getalVeld('verstTegen', 'Verste stand in het nadeel', 'Hoe ver liep de prijs maximaal tegen je in?')}
-      </div>
+      {getalVeld(
+        'dollars',
+        'Winst of verlies',
+        invoer.r !== null && besluit.bedrag
+          ? `Dat is ${metTeken(invoer.r)}R (${metTeken(geld!.procent)}% van je account). Verlies met een min ervoor.`
+          : 'Zoals je het in MT5 of bij FTMO ziet. Verlies met een min ervoor.',
+      )}
+      {details ? (
+        <div className="rij">
+          {getalVeld('verstVoor', 'Verste stand in het voordeel', 'Hoe ver liep de prijs maximaal jouw kant op?')}
+          {getalVeld('verstTegen', 'Verste stand in het nadeel', 'Hoe ver liep de prijs maximaal tegen je in?')}
+        </div>
+      ) : (
+        <button type="button" className="knop zelf" onClick={() => setDetails(true)}>
+          Meer details (optioneel)
+        </button>
+      )}
 
       <div className="veldgroep">
         <span className="label">Regeltrouw</span>
@@ -256,39 +273,15 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
         </div>
       </div>
 
-      {bewaard ? (
-        <label className="veldgroep">
-          <span className="label">Nabespreking</span>
-          <textarea
-            rows={5}
-            value={invoer.nabespreking}
-            onChange={(e) => setInvoer({ ...invoer, nabespreking: e.target.value })}
-          />
-        </label>
-      ) : (
-        <div className="veldgroep">
-          <span className="label">Nabespreking: twee korte vragen</span>
-          {vragen.map((vraag, n) => (
-            <label key={vraag} className="veldgroep">
-              <span>{vraag}</span>
-              <textarea
-                rows={2}
-                value={antwoorden[n]}
-                onChange={(e) => {
-                  const nieuw: [string, string] = n === 0 ? [e.target.value, antwoorden[1]] : [antwoorden[0], e.target.value]
-                  setAntwoorden(nieuw)
-                  // Beide antwoorden zijn nodig; pas dan is de nabespreking compleet.
-                  const compleet = nieuw[0].trim() && nieuw[1].trim()
-                  setInvoer({
-                    ...invoer,
-                    nabespreking: compleet ? `${vragen[0]}\n${nieuw[0].trim()}\n\n${vragen[1]}\n${nieuw[1].trim()}` : '',
-                  })
-                }}
-              />
-            </label>
-          ))}
-        </div>
-      )}
+      <label className="veldgroep">
+        <span className="label">Wat neem je mee? (optioneel)</span>
+        <textarea
+          rows={3}
+          placeholder={vragen[0]}
+          value={invoer.nabespreking}
+          onChange={(e) => setInvoer({ ...invoer, nabespreking: e.target.value })}
+        />
+      </label>
 
       {fouten.length > 0 && (
         <div className="melding fout" role="alert">
