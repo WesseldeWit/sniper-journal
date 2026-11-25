@@ -5,7 +5,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { kostenVan, type ModelId, type Verbruik } from './modellen'
 import { gebruikersTekst, systeemOpdracht, type AgentGeheugen, type Vervolg } from './opdracht'
-import { LezingSchema, type Lezing } from './schema'
+import { LezingSchema, Mt5Schema, type Lezing, type Mt5Lezing } from './schema'
 
 export interface LeesVraag {
   sleutel: string
@@ -137,6 +137,50 @@ export async function leesChart(vraag: LeesVraag): Promise<LeesAntwoord> {
       kosten: kostenVan(vraag.model, verbruik),
       duurMs: Math.round(performance.now() - start),
     }
+  } catch (fout) {
+    throw vertaalFout(fout)
+  }
+}
+
+// MARK: MT5-screenshot
+
+export interface Mt5Antwoord {
+  lezing: Mt5Lezing
+  kosten: number
+}
+
+const MT5_OPDRACHT = `Je leest een screenshot van MetaTrader 5 (meestal de telefoon-app) af. Zoek de positie in goud (XAUUSD). Lees af: richting (buy = long, sell = short), lotsize, openingsprijs (entry), stop loss (S/L), take profit (T/P) en de huidige winst of verlies in dollars als die er staat. Kun je iets niet lezen, zet het dan op null. Gok niet. Staan er meerdere posities, neem de XAUUSD-positie en meld de rest in de opmerking. Schrijf de opmerking in het Nederlands, kort.`
+
+export async function leesMt5(sleutel: string, model: ModelId, afbeelding: Blob): Promise<Mt5Antwoord> {
+  if (!sleutel.trim()) throw new LeesFout('Er is nog geen API-sleutel ingevuld in Instellingen.')
+  if (!SOORTEN.includes(afbeelding.type as Soort)) {
+    throw new LeesFout('Dit bestandstype wordt niet ondersteund. Gebruik PNG, JPEG, WebP of GIF.')
+  }
+  try {
+    const client = new Anthropic({ apiKey: sleutel.trim(), dangerouslyAllowBrowser: true })
+    const antwoord = await client.messages.parse({
+      model,
+      max_tokens: 4000,
+      system: MT5_OPDRACHT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: afbeelding.type as Soort, data: await alsBase64(afbeelding) } },
+            { type: 'text', text: 'Lees mijn positie af.' },
+          ],
+        },
+      ],
+      output_config: { effort: 'low', format: zodOutputFormat(Mt5Schema) },
+    })
+    if (!antwoord.parsed_output) throw new LeesFout('Het antwoord van het model had niet de verwachte vorm. Probeer het opnieuw.')
+    const verbruik: Verbruik = {
+      invoer: antwoord.usage.input_tokens,
+      uitvoer: antwoord.usage.output_tokens,
+      cacheLezen: antwoord.usage.cache_read_input_tokens ?? 0,
+      cacheSchrijven: antwoord.usage.cache_creation_input_tokens ?? 0,
+    }
+    return { lezing: antwoord.parsed_output, kosten: kostenVan(model, verbruik) }
   } catch (fout) {
     throw vertaalFout(fout)
   }

@@ -82,3 +82,17 @@ export const LezingSchema = z.object({
 
 export type Lezing = z.infer<typeof LezingSchema>
 export type Zekerheid = z.infer<typeof Zekerheid>
+
+// MARK: MT5-positie
+
+export const Mt5Schema = z.object({
+  richting: z.enum(['long', 'short']).nullable(),
+  lots: z.number().nullable(),
+  entry: z.number().nullable().describe('Openingsprijs.'),
+  stop: z.number().nullable().describe('S/L, of null als er geen stop staat.'),
+  takeProfit: z.number().nullable().describe('T/P, of null.'),
+  winstNu: z.number().nullable().describe('Huidige winst of verlies in dollars, negatief bij verlies.'),
+  opmerking: z.string().describe('Eén korte zin: wat onzeker was of wat verder opviel. Leeg als alles duidelijk was.'),
+})
+
+export type Mt5Lezing = z.infer<typeof Mt5Schema>

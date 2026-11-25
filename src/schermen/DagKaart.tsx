@@ -12,6 +12,8 @@ import BesluitStap from './BesluitStap'
 import CheckStap from './CheckStap'
 import ManagementKaart from './ManagementKaart'
 import ResultaatStap from './ResultaatStap'
+import TradeAchteraf from './TradeAchteraf'
+import { vandaag } from '../hulp/datum'
 
 interface Props {
   dag: Dag
@@ -140,6 +142,8 @@ export default function DagKaart({ dag, setDag, screenshot, setScreenshot, waars
           )
         })}
       </ol>
+
+      {!dag.besluit && !dag.afgeslotenOp && dag.datum <= vandaag() && <TradeAchteraf dag={dag} setDag={setDag} />}
 
       <label className="blok veldgroep">
         <span className="label">Notitie bij deze dag</span>
