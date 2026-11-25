@@ -63,7 +63,10 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
     const n = leesGetal(waarde, veld === 'dollars')
     const getal = Number.isNaN(n) ? null : n
     if (veld === 'dollars') {
-      setInvoer({ ...invoer, dollars: getal, r: getal === null ? null : rUitDollars(getal, besluit?.bedrag ?? null) })
+      const r = getal === null ? null : rUitDollars(getal, besluit?.bedrag ?? null)
+      // Zonder de extra details volgen de verste standen uit de uitkomst.
+      const verst = details ? {} : { verstVoor: null, verstTegen: null }
+      setInvoer({ ...invoer, ...verst, dollars: getal, r })
     } else {
       setInvoer({ ...invoer, [veld]: getal })
     }
