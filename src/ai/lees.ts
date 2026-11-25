@@ -149,7 +149,7 @@ export interface Mt5Antwoord {
   kosten: number
 }
 
-const MT5_OPDRACHT = `Je leest een screenshot van MetaTrader 5 (meestal de telefoon-app) af. Zoek de positie in goud (XAUUSD). Lees af: richting (buy = long, sell = short), lotsize, openingsprijs (entry), stop loss (S/L), take profit (T/P) en de huidige winst of verlies in dollars als die er staat. Kun je iets niet lezen, zet het dan op null. Gok niet. Staan er meerdere posities, neem de XAUUSD-positie en meld de rest in de opmerking. Schrijf de opmerking in het Nederlands, kort.`
+const MT5_OPDRACHT = `Je leest een screenshot van MetaTrader 5 (meestal de telefoon-app) af. Zoek de positie in goud (XAUUSD). Lees af: richting (buy = long, sell = short), lotsize, openingsprijs (entry), stop loss (S/L), take profit (T/P) en de winst of verlies in dollars: bij een open positie de huidige stand, bij een gesloten positie uit de geschiedenis het eindresultaat. Kun je iets niet lezen, zet het dan op null. Gok niet. Staan er meerdere posities, neem de XAUUSD-positie en meld de rest in de opmerking. Schrijf de opmerking in het Nederlands, kort.`
 
 export async function leesMt5(sleutel: string, model: ModelId, afbeelding: Blob): Promise<Mt5Antwoord> {
   if (!sleutel.trim()) throw new LeesFout('Er is nog geen API-sleutel ingevuld in Instellingen.')

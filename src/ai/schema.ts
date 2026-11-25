@@ -91,7 +91,7 @@ export const Mt5Schema = z.object({
   entry: z.number().nullable().describe('Openingsprijs.'),
   stop: z.number().nullable().describe('S/L, of null als er geen stop staat.'),
   takeProfit: z.number().nullable().describe('T/P, of null.'),
-  winstNu: z.number().nullable().describe('Huidige winst of verlies in dollars, negatief bij verlies.'),
+  winstNu: z.number().nullable().describe('Winst of verlies in dollars (open: huidige stand, gesloten: eindresultaat), negatief bij verlies.'),
   opmerking: z.string().describe('Eén korte zin: wat onzeker was of wat verder opviel. Leeg als alles duidelijk was.'),
 })
 

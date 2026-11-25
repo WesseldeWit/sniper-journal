@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import Icoon from '../onderdelen/Icoon'
+import { leesMt5, LeesFout } from '../ai/lees'
+import { MODELLEN, type ModelId } from '../ai/modellen'
+import { leesModel, leesSleutel } from '../ai/sleutel'
 import { dollars, kort, leesGetal, metTeken } from '../hulp/getal'
 import { leesScreenshot, schrijfDag, schrijfScreenshot, verwijderScreenshot, type Dag } from '../opslag/dagen'
 import { nabesprekingsVragen } from '../regels/terugblik'
@@ -29,6 +32,8 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
   const [bewerken, setBewerken] = useState(bewaard === null)
   const [invoer, setInvoer] = useState<ResultaatInvoer>(bewaard ?? LEEG_RESULTAAT)
   const [details, setDetails] = useState(false)
+  const [leest, setLeest] = useState(false)
+  const [melding, setMelding] = useState<string | null>(null)
   const [tekst, setTekst] = useState<Record<GetalVeld, string>>({
     dollars: bewaard ? kort(bewaard.dollars ?? inGeld(bewaard.r, dag.besluit ?? { bedrag: null, risicoProcent: null }).dollars) : '',
     verstVoor: bewaard ? kort(bewaard.verstVoor) : '',
@@ -81,6 +86,31 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
     if (!bestand) return
     await schrijfScreenshot(dag.datum, bestand, 'resultaat')
     setFoto(bestand)
+  }
+
+  async function leesUitMt5(bestand: File | undefined) {
+    if (!bestand) return
+    await kiesFoto(bestand)
+    const sleutel = leesSleutel()
+    if (!sleutel) {
+      setMelding('Geen API-sleutel: vul het bedrag zelf in.')
+      return
+    }
+    setLeest(true)
+    setMelding(null)
+    try {
+      const { lezing, kosten } = await leesMt5(sleutel, leesModel<ModelId>(MODELLEN.map((m) => m.id)), bestand)
+      if (lezing.winstNu === null) {
+        setMelding(`De agent kon geen winst of verlies vinden. Vul het bedrag zelf in. ${lezing.opmerking}`.trim())
+      } else {
+        wijzigGetal('dollars', kort(lezing.winstNu))
+        setMelding(`Afgelezen: ${dollars(lezing.winstNu)}. Klopt dat? ${lezing.opmerking} Kosten: $${kort(kosten)}.`.trim())
+      }
+    } catch (e) {
+      setMelding(e instanceof LeesFout ? `${e.message} Vul het bedrag zelf in.` : 'Aflezen lukte niet. Vul het bedrag zelf in.')
+    } finally {
+      setLeest(false)
+    }
   }
 
   async function wisFoto() {
@@ -192,6 +222,21 @@ export default function ResultaatStap({ dag, setDag }: { dag: Dag; setDag: (dag:
 
   return (
     <div className="blok formulier">
+      <label className={leest ? 'knop uit' : 'knop'}>
+        <Icoon naam="op" />
+        {leest ? 'De agent leest je MT5…' : 'Screenshot van MT5 uploaden'}
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          hidden
+          disabled={leest}
+          onChange={(e) => {
+            void leesUitMt5(e.target.files?.[0])
+            e.target.value = ''
+          }}
+        />
+      </label>
+      {melding && <p className="melding let-op">{melding}</p>}
       {getalVeld(
         'dollars',
         'Winst of verlies',
