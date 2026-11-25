@@ -1926,6 +1926,42 @@ fieldset:disabled .confluences label {
   margin-top: 8px;
 }
 
+.zelf-gezien {
+  gap: 8px;
+  border-color: var(--goud);
+}
+
+.zelf-gezien .bovenkop:not(:first-child) {
+  margin-top: 8px;
+}
+
+.beoordeel-lijst {
+  list-style: none;
+  gap: 14px;
+}
+
+.beoordeel-lijst li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.beoordeel-lijst .uitleg {
+  display: block;
+  color: var(--zacht);
+}
+
+.keuze-chip.gekozen {
+  border-color: var(--goud);
+  color: var(--goud);
+  font-weight: 650;
+}
+
+.keuze-chip:disabled:not(.gekozen) {
+  opacity: 0.4;
+}
+
 .melding.let-op {
   border: 1px solid var(--oranje);
   background: var(--oranje-zacht);

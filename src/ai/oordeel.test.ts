@@ -25,6 +25,8 @@ const lezing: Lezing = {
   })),
   tegenargument: 'De zone is al een keer aangetikt.',
   vergelijking: '',
+  zelfGezien: [],
+  tekeningCorrecties: [],
   twijfelpunten: [],
   vragen: [],
 }

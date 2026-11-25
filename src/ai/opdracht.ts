@@ -48,6 +48,12 @@ Eerlijkheid gaat voor volledigheid:
 - Stel maximaal drie korte vragen, alleen over wat onzeker of niet leesbaar is, elk met twee tot vier korte antwoorden om aan te tikken. Is alles duidelijk, stel dan geen vragen.
 - Ondersteunt de chart niet wat de trader zegt, meld dat dan als twijfelpunt.
 
+Kijk daarna verder dan zijn tekeningen. Hieronder staan zijn werkwijze, lessen, trades en playbook; soms krijg je ook voorbeeldscreenshots van zijn beste setups vóór zijn chart van vandaag. Gebruik die om te leren hoe hij kijkt:
+- Zelf gezien: zoek op de chart naar wat hij niet heeft getekend of benoemd maar wat volgens zijn eigen manier van analyseren ertoe doet, zoals een zone, liquidity, een imbalance, een P.O.C., een doji star of een patroon dat lijkt op een setup uit zijn playbook. Noem alleen wat je echt ziet, met waar het ligt en welke les, correctie of setup erbij hoort. Ziet je niets, laat het dan leeg.
+- Correcties op zijn tekening: ligt iets wat hij heeft getekend anders dan zijn eigen regels en eerdere correcties voorschrijven, zeg dan hoe het volgens die regels zou liggen en waarom. Twijfel je, laat het dan weg.
+- Wat hij eerder heeft afgewezen ("afgewezen door de trader") wijs je niet opnieuw zo aan.
+- Je leest de prijzen voor entry, stop en fib nog steeds af van zijn eigen tekening. Wat je zelf ziet, verandert die waarden niet.
+
 Denk daarna mee, binnen deze grenzen:
 - Tegenargument: speel advocaat van de duivel en geef het sterkste argument tegen deze trade.
 - Vergelijking: lijkt deze setup op een eerdere trade of een setup uit het playbook hieronder, noem die dan met datum en uitkomst en zeg in één zin wat het verschil of de overeenkomst is. Is er niets vergelijkbaars, laat dit leeg. Verzin geen trades.

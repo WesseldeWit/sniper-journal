@@ -56,6 +56,24 @@ export const LezingSchema = z.object({
   vergelijking: z
     .string()
     .describe('Eén of twee zinnen over een eerdere trade of playbook-setup die hierop lijkt, met datum en uitkomst. Leeg als er niets vergelijkbaars is meegegeven.'),
+  zelfGezien: z
+    .array(
+      z.object({
+        wat: z.string().describe('Wat je ziet, in een paar woorden, bijvoorbeeld "doji star onder de 0.764" of "onaangeraakte imbalance".'),
+        waar: z.string().describe('Waar op de chart, met prijs als die af te lezen is.'),
+        waarom: z.string().describe('Waarom dit voor deze trader telt: welke les, correctie, confluence of playbook-setup erbij hoort. Eén zin.'),
+      }),
+    )
+    .describe('Maximaal vijf dingen op de chart die de trader NIET zelf heeft getekend of benoemd, maar die volgens zijn eigen werkwijze, lessen of playbook ertoe doen. Leeg als er niets is. Verzin niets.'),
+  tekeningCorrecties: z
+    .array(
+      z.object({
+        wat: z.string().describe('Welke tekening van de trader, bijvoorbeeld "de demand-zone" of "de 0.764-lijn".'),
+        voorstel: z.string().describe('Hoe het volgens zijn eigen regels zou moeten liggen, met prijs als die af te lezen is.'),
+        waarom: z.string().describe('Welke regel, les of correctie van hem dit zegt. Eén zin.'),
+      }),
+    )
+    .describe('Maximaal drie plekken waar de tekening van de trader afwijkt van zijn eigen regels en eerdere correcties. Leeg als alles klopt of als je het niet zeker weet.'),
   twijfelpunten: z.array(z.string()).describe('Waar de chart niet ondersteunt wat de trader zegt, of wat tegen de trade pleit.'),
   vragen: z
     .array(z.object({ vraag: z.string(), antwoorden: z.array(z.string()) }))

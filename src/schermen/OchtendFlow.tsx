@@ -9,7 +9,7 @@ import { compacteDatum } from '../hulp/datum'
 import { dollars, getal, kort, leesGetal, metTeken } from '../hulp/getal'
 import Icoon from '../onderdelen/Icoon'
 import StatusChip from '../onderdelen/StatusChip'
-import { leesAlleDagen, schrijfDag, schrijfScreenshot, type Dag } from '../opslag/dagen'
+import { leesAlleDagen, leesScreenshot, schrijfDag, schrijfScreenshot, type Dag } from '../opslag/dagen'
 import { leesGeheugen, schrijfGeheugen } from '../opslag/geheugen'
 import { useInstellingen } from '../opslag/InstellingenContext'
 import { leesPlaybook, type PlaybookKaart } from '../opslag/playbook'
@@ -22,6 +22,7 @@ import { sessieVanKlok } from '../regels/sessie'
 
 const NAMEN = Object.fromEntries([...VERPLICHT, ...EXTRA].map((c) => [c.id, c.naam]))
 const MAX_VRAGEN = 3
+const MAX_VOORBEELDEN = 3
 type PrijsVeld = 'entry' | 'stop' | 'fibLijn' | 'zoneRand'
 const PRIJS_NAAM: Record<PrijsVeld, string> = { entry: 'Entry', stop: 'Stop loss', fibLijn: '0.764-lijn', zoneRand: 'Rand van de zone' }
 
@@ -58,6 +59,8 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
   const [zelfPatronen, setZelfPatronen] = useState<string[]>([])
   const [playbook, setPlaybook] = useState<PlaybookKaart[]>([])
   const [kosten, setKosten] = useState(0)
+  const [voorbeelden, setVoorbeelden] = useState<{ afbeelding: Blob; label: string }[]>([])
+  const [beoordeeld, setBeoordeeld] = useState<Record<string, 'ja' | 'nee'>>({})
   const rondes = useRef(0)
   const sleutel = leesSleutel()
   const model = leesModel<ModelId>(MODELLEN.map((m) => m.id))
@@ -80,6 +83,18 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
       })
       setZelfPatronen(patronen(dagen))
       setPlaybook(playbook)
+      // De beste setups uit het playbook gaan als voorbeeldbeeld mee, zodat de agent ziet hoe jij kijkt.
+      const beste = [...playbook]
+        .sort((a, b) => (b.r ?? -99) - (a.r ?? -99) || b.datum.localeCompare(a.datum))
+        .slice(0, MAX_VOORBEELDEN)
+      void Promise.all(
+        beste.map(async (p) => {
+          const afbeelding = await leesScreenshot(p.datum)
+          if (!afbeelding) return null
+          const label = `${compacteDatum(p.datum)} · ${p.model ? MODEL_NAMEN[p.model] : 'geen model'}${p.richting ? ` · ${p.richting}` : ''}${p.r === null ? '' : ` · ${metTeken(p.r)}R`}${p.confluences.length ? ` · ${p.confluences.join(', ')}` : ''}${p.uitleg ? ` · ${p.uitleg}` : ''}`
+          return { afbeelding, label }
+        }),
+      ).then((lijst) => setVoorbeelden(lijst.filter((v): v is { afbeelding: Blob; label: string } => v !== null)))
     })
   }, [instellingen.accountGrootte])
 
@@ -104,6 +119,8 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
         afbeelding: bestand,
         idee,
         geheugen,
+        // Voorbeeldbeelden alleen in de eerste ronde; daarna kent de agent zijn eerste lezing al.
+        voorbeelden: reacties ? [] : voorbeelden,
         vervolg: reacties && lezing ? { vorige: JSON.stringify(lezing), reacties } : undefined,
       })
       rondes.current += 1
@@ -192,7 +209,11 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
             <button className="knop primair" disabled={fase === 'bezig' || !sleutel} onClick={() => void lees()}>
               {fase === 'bezig' ? 'De agent leest je chart…' : 'Laat de agent lezen'}
             </button>
-            <p className="zacht">Dit kost tegoed op je API-account. Datum en sessie komen van de klok.</p>
+            <p className="zacht">
+              Dit kost tegoed op je API-account. Datum en sessie komen van de klok.
+              {voorbeelden.length > 0 &&
+                ` ${voorbeelden.length} ${voorbeelden.length === 1 ? 'setup' : 'setups'} uit je playbook ${voorbeelden.length === 1 ? 'gaat' : 'gaan'} als voorbeeld mee.`}
+            </p>
           </>
         )}
         <button className="knop zelf" onClick={zelfInvullen}>
@@ -267,6 +288,12 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
       ...correcties,
       `Correctie (${vandaagTekst}): ${NAMEN[id]} was ${nieuw === 'gezien' ? 'wel' : 'niet'} aanwezig; de AI zei: "${c.uitleg}"`,
     ])
+  }
+
+  function beoordeel(sleutelTekst: string, oordeel: 'ja' | 'nee', regel: string) {
+    if (beoordeeld[sleutelTekst]) return
+    setBeoordeeld({ ...beoordeeld, [sleutelTekst]: oordeel })
+    setCorrecties([...correcties, regel])
   }
 
   function wisselRichting() {
@@ -416,6 +443,80 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
         </ul>
       </div>
 
+      {((lezing.zelfGezien ?? []).length > 0 || (lezing.tekeningCorrecties ?? []).length > 0) && (
+        <div className="blok zelf-gezien">
+          {(lezing.zelfGezien ?? []).length > 0 && (
+            <>
+              <span className="bovenkop">Zelf gezien · niet door jou getekend</span>
+              <ul className="opsomming beoordeel-lijst">
+                {(lezing.zelfGezien ?? []).map((z) => {
+                  const k = `gezien:${z.wat}:${z.waar}`
+                  return (
+                    <li key={k}>
+                      <span>
+                        <strong>{z.wat}</strong> · {z.waar}
+                        <span className="uitleg">{z.waarom}</span>
+                      </span>
+                      <span className="labels">
+                        <button
+                          className={beoordeeld[k] === 'ja' ? 'chip keuze-chip gekozen' : 'chip keuze-chip'}
+                          disabled={!!beoordeeld[k] || bezig}
+                          onClick={() => beoordeel(k, 'ja', `Zelf gezien (${vandaagTekst}), bevestigd door de trader: ${z.wat} (${z.waar}). Hierop letten. ${z.waarom}`)}
+                        >
+                          Klopt
+                        </button>
+                        <button
+                          className={beoordeeld[k] === 'nee' ? 'chip keuze-chip gekozen' : 'chip keuze-chip'}
+                          disabled={!!beoordeeld[k] || bezig}
+                          onClick={() => beoordeel(k, 'nee', `Zelf gezien (${vandaagTekst}), afgewezen door de trader: ${z.wat} (${z.waar}). Zo niet aanwijzen.`)}
+                        >
+                          Klopt niet
+                        </button>
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          )}
+          {(lezing.tekeningCorrecties ?? []).length > 0 && (
+            <>
+              <span className="bovenkop">Correcties op je tekening</span>
+              <ul className="opsomming beoordeel-lijst">
+                {(lezing.tekeningCorrecties ?? []).map((c) => {
+                  const k = `tekening:${c.wat}:${c.voorstel}`
+                  return (
+                    <li key={k}>
+                      <span>
+                        <strong>{c.wat}</strong> · {c.voorstel}
+                        <span className="uitleg">{c.waarom}</span>
+                      </span>
+                      <span className="labels">
+                        <button
+                          className={beoordeeld[k] === 'ja' ? 'chip keuze-chip gekozen' : 'chip keuze-chip'}
+                          disabled={!!beoordeeld[k] || bezig}
+                          onClick={() => beoordeel(k, 'ja', `Tekening (${vandaagTekst}), terecht gecorrigeerd: ${c.wat} hoort ${c.voorstel}. ${c.waarom}`)}
+                        >
+                          Klopt
+                        </button>
+                        <button
+                          className={beoordeeld[k] === 'nee' ? 'chip keuze-chip gekozen' : 'chip keuze-chip'}
+                          disabled={!!beoordeeld[k] || bezig}
+                          onClick={() => beoordeel(k, 'nee', `Tekening (${vandaagTekst}), correctie afgewezen door de trader: ${c.wat} lag goed; niet "${c.voorstel}".`)}
+                        >
+                          Klopt niet
+                        </button>
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          )}
+          <span className="zacht">Wat je hier beoordeelt, gaat bij "Klopt" naar "Zo analyseer ik".</span>
+        </div>
+      )}
+
       <div className="blok tegen">
         <span className="bovenkop">Advocaat van de duivel</span>
         <p>{lezing.tegenargument}</p>
@@ -489,7 +590,7 @@ export default function OchtendFlow({ dag, setDag, setScreenshot, waarschuwingen
         Zonder "Klopt" wordt er niets opgeslagen. {check.goedgekeurd ? 'Daarna volgt de orderkaart.' : 'Een afgekeurde setup kan geen trade worden.'}{' '}
         <span className="getal">Verbruik tot nu toe: ${getal(kosten, 3)}.</span>
       </p>
-      <button className="knop zelf" disabled={bezig} onClick={() => { setLezing(null); setCorrecties([]); setFase('start') }}>
+      <button className="knop zelf" disabled={bezig} onClick={() => { setLezing(null); setCorrecties([]); setBeoordeeld({}); setFase('start') }}>
         Opnieuw beginnen
       </button>
     </div>

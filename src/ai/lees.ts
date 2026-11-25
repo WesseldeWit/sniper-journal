@@ -15,6 +15,8 @@ export interface LeesVraag {
   idee: string
   /** Wat de agent over de trader weet: werkwijze, lessen, laatste trades, playbook en FTMO-stand. */
   geheugen: AgentGeheugen
+  /** Voorbeeldscreenshots uit het playbook, met een korte uitleg per beeld. */
+  voorbeelden?: { afbeelding: Blob; label: string }[]
   /** Bij een tweede ronde: de vorige lezing met de antwoorden en correcties van de trader. */
   vervolg?: Vervolg
 }
@@ -67,6 +69,21 @@ function vertaalFout(fout: unknown): LeesFout {
   return new LeesFout(fout instanceof Error ? fout.message : 'Er ging iets mis.')
 }
 
+async function voorbeeldBlokken(voorbeelden: { afbeelding: Blob; label: string }[]) {
+  const geldig = voorbeelden.filter((v) => SOORTEN.includes(v.afbeelding.type as Soort))
+  const blokken = await Promise.all(
+    geldig.map(async (v, n) => [
+      { type: 'text' as const, text: `Voorbeeld ${n + 1} uit mijn playbook: ${v.label}` },
+      {
+        type: 'image' as const,
+        source: { type: 'base64' as const, media_type: v.afbeelding.type as Soort, data: await alsBase64(v.afbeelding) },
+      },
+    ]),
+  )
+  if (blokken.length === 0) return []
+  return [...blokken.flat(), { type: 'text' as const, text: 'Hierna volgt mijn chart van vandaag.' }]
+}
+
 export async function leesChart(vraag: LeesVraag): Promise<LeesAntwoord> {
   if (!vraag.sleutel.trim()) throw new LeesFout('Er is nog geen API-sleutel ingevuld in Instellingen.')
   if (!SOORTEN.includes(vraag.afbeelding.type as Soort)) {
@@ -85,6 +102,7 @@ export async function leesChart(vraag: LeesVraag): Promise<LeesAntwoord> {
         {
           role: 'user',
           content: [
+            ...(await voorbeeldBlokken(vraag.voorbeelden ?? [])),
             {
               type: 'image',
               source: { type: 'base64', media_type: vraag.afbeelding.type as Soort, data: await alsBase64(vraag.afbeelding) },
